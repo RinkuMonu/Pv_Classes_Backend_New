@@ -1,13 +1,5 @@
 const mongoose = require("mongoose");
 
-// const AddressSchema = new mongoose.Schema({
-//     street: { type: String, required: true },
-//     city: { type: String, required: true },
-//     state: { type: String, required: true },
-//     postalCode: { type: String, required: true },
-//     country: { type: String, required: true },
-// }, { _id: false });
-
 const OrderSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -35,19 +27,15 @@ const OrderSchema = new mongoose.Schema({
             test: { type: mongoose.Schema.Types.ObjectId, ref: "TestSeries", required: true }
         }
     ],
-    combo:[
+    combo: [
         {
             combo: { type: mongoose.Schema.Types.ObjectId, ref: "Combo", required: true }
         }
     ],
-    // address: {
-    //     type: AddressSchema,
-    //     required: true
-    // },
     paymentMethod: {
         type: String,
-        enum: ["card", "upi", "netbanking", "cod"],
-        default: "cod"
+        enum: ["card", "upi", "netbanking"],
+        required: true
     },
     totalAmount: { type: Number, required: true },
     paymentStatus: {
@@ -55,6 +43,10 @@ const OrderSchema = new mongoose.Schema({
         enum: ["pending", "paid", "failed"],
         default: "pending"
     },
+    paymentReference: {
+        type: String
+    },
+    transactionId: { type: String },
     orderStatus: {
         type: String,
         enum: ["processing", "completed", "cancelled"],

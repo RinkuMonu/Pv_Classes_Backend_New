@@ -11,6 +11,7 @@ const {
 
 const checkoutRouter = express.Router();
 
+// create checkout ya create order
 checkoutRouter.post("/", authMiddleware, checkout);
 
 checkoutRouter.get("/get-all", getAllOrders);

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const courseController = require("../Controllers/course");
 const upload = require("../middleware/upload");
-const uploadVideo = require("../middleware/videoUpload"); // ✅ your Cloudinary video middleware
+// const uploadVideo = require("../middleware/videoUpload"); // ✅ your Cloudinary video middleware
 
 const uploadcourse = upload("course");
 
@@ -41,12 +41,12 @@ router.delete("/:id", courseController.deleteCourse);
 
 router.post(
     "/:courseId/upload-video",
-    uploadVideo.single("url"),
+    // uploadVideo.single("url"),
     courseController.uploadCourseVideo
 );
 router.put(
     "/:courseId/update-videos/:videoId",
-    uploadVideo.single("url"),
+    // uploadVideo.single("url"),
     courseController.updateCourseVideo
 );
 

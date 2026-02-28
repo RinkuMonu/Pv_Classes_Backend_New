@@ -34,6 +34,8 @@ const notesRoute = require("./Routes/noteRoutes");
 const countRoutes = require("./Routes/CountRoutes");
 const subRoutes = require("./Routes/subject");
 
+const paymentRoutes = require("./Routes/paymentRoutes");
+
 const app = express();
 app.use(
   cors({
@@ -43,6 +45,7 @@ app.use(
       "http://127.0.0.1:5173",
       "https://pvclasses.in", // sometimes browser uses 127.0.0.1
       "https://admin.pvclasses.in",
+      "http://localhost:5173",
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
@@ -90,10 +93,12 @@ app.use("/api/notification", notificationRoutes);
 app.use("/api/count", countRoutes);
 app.use("/api/sub", subRoutes);
 
+app.use("/api/payment", paymentRoutes);
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Something went wrong!" });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5006;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

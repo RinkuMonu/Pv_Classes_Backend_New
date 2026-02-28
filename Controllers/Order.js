@@ -1,11 +1,124 @@
 const Order = require("../Models/Order");
 const Access = require("../Models/Access");
 const Course = require("../Models/Course");
+
+
+// exports.checkout = async (req, res) => {
+
+//     try {
+//         const userId = req.user.id;
+//         // Step 1: Transform cart by itemType
+//         const grouped = { courses: [], books: [], testSeries: [], combo: [] };
+//         req.body.cart.forEach(item => {
+//             if (item.itemType === "course") {
+//                 grouped.courses.push({ course: item.itemId, quantity: item.quantity });
+//             } else if (item.itemType === "book") {
+//                 grouped.books.push({ book: item.itemId, quantity: item.quantity });
+//             } else if (item.itemType === "testSeries") {
+//                 grouped.testSeries.push({ test: item.itemId, quantity: item.quantity });
+//             } else if (item.itemType === "combo") {
+//                 grouped.combo.push({ combo: item.itemId, quantity: item.quantity });
+//             }
+//         });
+
+//         const { courses, books, testSeries, combo } = grouped;
+//         const { paymentMethod, totalAmount } = req.body;
+
+
+//         if ((!courses.length && !books.length && !testSeries.length && !combo.length) || !paymentMethod || !totalAmount) {
+//             return res.status(400).json({ message: "At least one item and all fields are required!" });
+//         }
+
+//         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
+//             return res.status(400).json({ message: "Invalid payment method" });
+//         }
+
+//         // Step 2: Create Order
+//         const order = new Order({
+//             user: userId,
+//             courses,
+//             books,
+//             testSeries,
+//             combo,
+//             totalAmount: totalAmount,
+//             paymentMethod,
+//             paymentStatus: "pending",
+//             orderStatus: "processing"
+//         });
+//         await order.save();
+//         // Step 3: Grant Access for Courses (+ Combo)
+//         for (const c of courses) {
+//             const course = await Course.findById(c.course).populate("comboId");
+//             if (!course) continue;
+
+//             const validTill = course.validity
+//                 ? new Date(Date.now() + parseInt(course.validity) * 24 * 60 * 60 * 1000)
+//                 : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+//             // Standalone course access
+//             const existingAccessCourse = await Access.findOne({ user: userId, course: course._id });
+//             if (!existingAccessCourse) {
+//                 await Access.create({ user: userId, course: course._id, validTill });
+//             }
+
+//             // Combo items access
+//             if (course.comboId) {
+//                 const combo = course.comboId;
+
+//                 if (combo.books?.length > 0) {
+//                     for (const bookId of combo.books) {
+//                         const existingBookAccess = await Access.findOne({ user: userId, book: bookId });
+//                         if (!existingBookAccess) {
+//                             await Access.create({ user: userId, book: bookId, validTill });
+//                         }
+//                     }
+//                 }
+
+//                 if (combo.testSeries?.length > 0) {
+//                     for (const testId of combo.testSeries) {
+//                         const existingTestAccess = await Access.findOne({ user: userId, testSeries: testId });
+//                         if (!existingTestAccess) {
+//                             await Access.create({ user: userId, testSeries: testId, validTill });
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Step 4: Standalone Books
+//         for (const b of books) {
+//             const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+//             const existingBookAccess = await Access.findOne({ user: userId, book: b.book });
+//             if (!existingBookAccess) {
+//                 await Access.create({ user: userId, book: b.book, validTill });
+//             }
+//         }
+
+//         // Step 5: Standalone TestSeries
+//         for (const t of testSeries) {
+//             const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+//             const existingTestAccess = await Access.findOne({ user: userId, testSeries: t.test });
+//             if (!existingTestAccess) {
+//                 await Access.create({ user: userId, testSeries: t.test, validTill });
+//             }
+//         }
+
+//         res.status(201).json({
+//             message: "Checkout successful, order created, access granted!",
+//             order
+//         });
+//     } catch (error) {
+//         console.log(error);
+//         res.status(500).json({ error: error.message });
+//     }
+// };
+
+
 exports.checkout = async (req, res) => {
 
     try {
         const userId = req.user.id;
-        // Step 1: Transform cart by itemType
+        // Step 1: Transform cart by itemType 
         const grouped = { courses: [], books: [], testSeries: [], combo: [] };
         req.body.cart.forEach(item => {
             if (item.itemType === "course") {
@@ -14,24 +127,21 @@ exports.checkout = async (req, res) => {
                 grouped.books.push({ book: item.itemId, quantity: item.quantity });
             } else if (item.itemType === "testSeries") {
                 grouped.testSeries.push({ test: item.itemId, quantity: item.quantity });
-            }else if (item.itemType === "combo") {
+            } else if (item.itemType === "combo") {
                 grouped.combo.push({ combo: item.itemId, quantity: item.quantity });
             }
         });
 
-        const { courses, books, testSeries,combo } = grouped;
-        const { paymentMethod, totalAmount,couponId } = req.body;
+        const { courses, books, testSeries, combo } = grouped;
+        const { paymentMethod, totalAmount } = req.body;
 
-        // const address = {
-        //     street: user.address,
-        //     city: user.city,
-        //     state: user.state,
-        //     postalCode: user.pincode,
-        //     country: user.country || "India" 
-        // };
 
         if ((!courses.length && !books.length && !testSeries.length && !combo.length) || !paymentMethod || !totalAmount) {
             return res.status(400).json({ message: "At least one item and all fields are required!" });
+        }
+
+        if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
+            return res.status(400).json({ message: "Invalid payment method" });
         }
 
         // Step 2: Create Order
@@ -46,66 +156,10 @@ exports.checkout = async (req, res) => {
             paymentStatus: "pending",
             orderStatus: "processing"
         });
-        await order.save();        
-        // Step 3: Grant Access for Courses (+ Combo)
-        for (const c of courses) {
-            const course = await Course.findById(c.course).populate("comboId");
-            if (!course) continue;
-
-            const validTill = course.validity
-                ? new Date(Date.now() + parseInt(course.validity) * 24 * 60 * 60 * 1000)
-                : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-
-            // Standalone course access
-            const existingAccessCourse = await Access.findOne({ user: userId, course: course._id });
-            if (!existingAccessCourse) {
-                await Access.create({ user: userId, course: course._id, validTill });
-            }
-
-            // Combo items access
-            if (course.comboId) {
-                const combo = course.comboId;
-
-                if (combo.books?.length > 0) {
-                    for (const bookId of combo.books) {
-                        const existingBookAccess = await Access.findOne({ user: userId, book: bookId });
-                        if (!existingBookAccess) {
-                            await Access.create({ user: userId, book: bookId, validTill });
-                        }
-                    }
-                }
-
-                if (combo.testSeries?.length > 0) {
-                    for (const testId of combo.testSeries) {
-                        const existingTestAccess = await Access.findOne({ user: userId, testSeries: testId });
-                        if (!existingTestAccess) {
-                            await Access.create({ user: userId, testSeries: testId, validTill });
-                        }
-                    }
-                }
-            }
-        }
-
-        // Step 4: Standalone Books
-        for (const b of books) {
-            const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-            const existingBookAccess = await Access.findOne({ user: userId, book: b.book });
-            if (!existingBookAccess) {
-                await Access.create({ user: userId, book: b.book, validTill });
-            }
-        }
-
-        // Step 5: Standalone TestSeries
-        for (const t of testSeries) {
-            const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-            const existingTestAccess = await Access.findOne({ user: userId, testSeries: t.test });
-            if (!existingTestAccess) {
-                await Access.create({ user: userId, testSeries: t.test, validTill });
-            }
-        }
-
+        await order.save();
+       
         res.status(201).json({
-            message: "Checkout successful, order created, access granted!",
+            message: "Order created successfully. Proceed to payment.",
             order
         });
     } catch (error) {
@@ -113,6 +167,7 @@ exports.checkout = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
 
 exports.getAllOrders = async (req, res) => {
     try {
