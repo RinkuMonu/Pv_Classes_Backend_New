@@ -9,11 +9,9 @@ const connectDB = async () => {
       process.exit(1);
     }
 
-    // await mongoose.connect(mongoURI, {
-    //   useNewUrlParser: true,
-    //   useUnifiedTopology: true,
-    // });
-    mongoose.connect(process.env.MONGODB_URI);
+    // ✅ NO OPTIONS HERE
+    await mongoose.connect(mongoURI);
+
     console.log("✅ MongoDB Connected Successfully");
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error.message);
@@ -22,3 +20,4 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+

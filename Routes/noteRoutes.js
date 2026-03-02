@@ -1,24 +1,60 @@
-const express = require('express');
+
+// const express = require('express');
+// const router = express.Router();
+// const noteController = require('../Controllers/noteController');
+// const upload = require('../middleware/upload');
+
+// // Create Note
+// router.post('/', upload("pdf").single("pdf"), noteController.createNote);
+
+// // Get All Notes (Grouped)
+// router.get('/', noteController.getNotes);
+
+// // Get Notes By Course
+// router.get('/course/:courseName', noteController.getNotesByCourse);
+
+// // Search Notes
+// router.get('/search', noteController.searchNotes);
+
+// // Get Single Note
+// router.get('/:id', noteController.getNoteById);
+
+// // Update Note
+// router.put('/:id', upload("pdf").single("pdf"), noteController.updateNote);
+
+// // Delete Note
+// router.delete('/:id', noteController.deleteNote);
+
+// module.exports = router;
+
+
+
+const express = require("express");
 const router = express.Router();
-const noteController = require('../Controllers/noteController');
-const upload = require('../middleware/upload');
+const noteController = require("../Controllers/noteController");
+const upload = require("../middleware/upload");
 
-// Create Note (Upload PDF to uploads/pdf)
-router.post('/', upload("pdf").single("pdf"), noteController.createNote);
+const uploadPdf = upload("pdf");
 
-// Get all Notes
-router.get('/', noteController.getNotes);
+// Create Note
+router.post("/", uploadPdf.single("pdf"), noteController.createNote);
 
-// ✅ Search Notes
-router.get('/search', noteController.searchNotes);
+// Get All Notes
+router.get("/", noteController.getNotes);
 
-// Get single Note
-router.get('/:id', noteController.getNoteById);
+// Get Notes By Course ID
+router.get("/course/:courseId", noteController.getNotesByCourse);
+
+// Search Notes
+router.get("/search", noteController.searchNotes);
+
+// Get Single Note
+router.get("/:id", noteController.getNoteById);
 
 // Update Note
-router.put('/:id', upload("pdf").single("pdf"), noteController.updateNote);
+router.put("/:id", uploadPdf.single("pdf"), noteController.updateNote);
 
 // Delete Note
-router.delete('/:id', noteController.deleteNote);
+router.delete("/:id", noteController.deleteNote);
 
 module.exports = router;
