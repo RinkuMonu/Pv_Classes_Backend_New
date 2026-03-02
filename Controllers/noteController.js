@@ -25,7 +25,6 @@
 //             description,
 //             pdfUrl
 //         });
-
 //         await note.save();
 
 //         res.status(201).json(note);
@@ -152,12 +151,10 @@
 //                     fs.unlinkSync(oldPath);
 //                 }
 //             }
-
 //             note.pdfUrl = `uploads/pdf/${req.file.filename}`;
 //         }
 
 //         await note.save();
-
 //         res.status(200).json(note);
 //     } catch (error) {
 //         res.status(500).json({ message: "Server Error", error: error.message });
@@ -182,7 +179,6 @@
 //         }
 
 //         await note.deleteOne();
-
 //         res.status(200).json({ message: "Note deleted successfully" });
 //     } catch (error) {
 //         res.status(500).json({ message: "Server Error", error: error.message });
