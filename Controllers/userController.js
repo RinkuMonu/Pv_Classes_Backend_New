@@ -241,19 +241,59 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+// exports.getAllUserData = async (req, res) => {
+//   try {
+//     const users = await User.find(); // fetch all users
+//     if (!users.length) {
+//       return res.status(404).json({ message: "No users found" });
+//     }
+//     return res.status(200).json({
+//       message: "Users fetched successfully",
+//       data: users,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching users:", error);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.getAllUserData = async (req, res) => {
   try {
-    const users = await User.find(); // fetch all users
-    if (!users.length) {
-      return res.status(404).json({ message: "No users found" });
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || "";
+
+    const skip = (page - 1) * limit;
+
+    let filter = {};
+
+    // 🔎 Search by user name
+    if (search) {
+      filter.name = { $regex: search, $options: "i" }; // case-insensitive
     }
-    return res.status(200).json({
+
+    const totalUsers = await User.countDocuments(filter);
+
+    const users = await User.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
       message: "Users fetched successfully",
       data: users,
+      pagination: {
+        totalUsers,
+        currentPage: page,
+        totalPages: Math.ceil(totalUsers / limit),
+        limit
+      }
     });
+
   } catch (error) {
     console.error("Error fetching users:", error);
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
