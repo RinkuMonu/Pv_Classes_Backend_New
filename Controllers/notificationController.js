@@ -134,7 +134,9 @@ exports.getAllNotifications = async (req, res) => {
       .sort({ createdAt: -1 }) // latest first
       .skip(skip)
       .limit(pageSize)
-      .populate("createdBy", "name email"); // optional: populate admin info
+      .populate("createdBy", "name email")
+      .populate("category", "name slug description");
+
 
     const totalNotifications = await Notification.countDocuments(filter);
 
