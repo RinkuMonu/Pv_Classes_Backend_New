@@ -19,7 +19,7 @@ CurrentAffairSchema.index({ title: "text", content: "text", tags: "text" });
 // 🖼️ Virtual field for full image URL
 CurrentAffairSchema.virtual("full_image").get(function () {
   if (this.image) {
-    const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+    const baseUrl = process.env.BASE_URL || "http://localhost:5006";
     return `${baseUrl}/uploads/currentAffairs/${this.image}`;
   }
   return null;

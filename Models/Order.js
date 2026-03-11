@@ -21,6 +21,8 @@ const OrderSchema = new mongoose.Schema({
         }
     ],
 
+
+
     // Test Series purchase
     testSeries: [
         {
@@ -32,6 +34,17 @@ const OrderSchema = new mongoose.Schema({
             combo: { type: mongoose.Schema.Types.ObjectId, ref: "Combo", required: true }
         }
     ],
+
+    shippingAddress: {
+        name: String,
+        phone: String,
+        address: String,
+        city: String,
+        state: String,
+        district: String,
+        pincode: String
+    },
+
     paymentMethod: {
         type: String,
         enum: ["card", "upi", "netbanking"],
@@ -49,8 +62,18 @@ const OrderSchema = new mongoose.Schema({
     transactionId: { type: String },
     orderStatus: {
         type: String,
-        enum: ["processing", "completed", "cancelled"],
+        // enum: ["processing", "completed", "cancelled"],
+        enum: ["processing", "confirmed", "packed", "shipped", "completed", "cancelled"],
         default: "processing"
+    },
+
+    coupon: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Coupon"
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
     },
     createdAt: { type: Date, default: Date.now }
 });

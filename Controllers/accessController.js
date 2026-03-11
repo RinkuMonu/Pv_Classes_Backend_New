@@ -22,7 +22,9 @@ exports.checkAccess = async (req, res) => {
         // 2️⃣ Check if user purchased this item directly or via combo
         const orders = await Order.find({
             user: userId,
-            orderStatus: "completed"
+            // orderStatus: "completed"
+            paymentStatus: "paid"
+
         }).populate({
             path: "courses.course books.book testSeries.test",
             select: "_id comboId"

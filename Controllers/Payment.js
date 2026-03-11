@@ -5,6 +5,7 @@ const Access = require("../Models/Access");
 const Course = require("../Models/Course");
 const Combo = require("../Models/Combo");
 const Cart = require("../Models/Cart");
+const Coupon = require("../Models/coupon");
 
 // 🔹 Reference Generator
 const generateReference = () => {
@@ -212,10 +213,31 @@ exports.paymentCallback = async (req, res) => {
         // ✅ SUCCESS CASE
         if (responseCode === "100") {
 
+            // order.paymentStatus = "paid";
+            // order.orderStatus = "completed";
+            // order.transactionId = pgTransId;
+            // await order.save();
+
             order.paymentStatus = "paid";
-            order.orderStatus = "completed";
             order.transactionId = pgTransId;
+
+            if (order.books && order.books.length > 0) {
+                order.orderStatus = "confirmed"; // 📦 book order
+            } else {
+                order.orderStatus = "completed"; // 🎓 digital order
+            }
+
             await order.save();
+
+            // 🔹 MARK COUPON USED
+            if (order.coupon) {
+                await Coupon.findByIdAndUpdate(
+                    order.coupon,
+                    {
+                        $addToSet: { usedBy: order.user }
+                    }
+                );
+            }
 
             const userId = order.user;
 
@@ -231,7 +253,7 @@ exports.paymentCallback = async (req, res) => {
                     : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
                 const existingAccess = await Access.findOne({ user: userId, course: course._id });
-                if (!existingAccess) { 
+                if (!existingAccess) {
                     await Access.create({ user: userId, course: course._id, validTill });
                 }
 
@@ -271,7 +293,7 @@ exports.paymentCallback = async (req, res) => {
             // 3️⃣ STANDALONE TEST SERIES
             // =========================
             for (const t of order.testSeries) {
-                const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); 
+                const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
                 const exist = await Access.findOne({ user: userId, testSeries: t.test });
                 if (!exist) {
@@ -328,6 +350,8 @@ exports.paymentCallback = async (req, res) => {
         } else {
             order.paymentStatus = "failed";
             order.orderStatus = "cancelled";
+            order.transactionId = pgTransId;
+
             await order.save();
 
             return res.status(200).json({

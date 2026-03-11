@@ -13,7 +13,7 @@ const CourseSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false },
     exam: { type: mongoose.Schema.Types.ObjectId, ref: "Exam", required: true },
     type: { type: String, enum: ["Test Series", "Course"], required: true },
     price: { type: Number, default: 0 },
