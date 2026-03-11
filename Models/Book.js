@@ -67,7 +67,7 @@ const bookSchema = new mongoose.Schema(
 );
 bookSchema.virtual("full_image").get(function () {
   if (Array.isArray(this.images) && this.images.length > 0) {
-    const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+    const baseUrl = process.env.BASE_URL || "http://localhost:5006";
     return this.images.map(img => `${baseUrl}/uploads/book/${img}`);
   }
   return [];

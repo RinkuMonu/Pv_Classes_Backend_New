@@ -29,8 +29,8 @@ const BookCategorySchema = new mongoose.Schema(
 );
 BookCategorySchema.virtual("full_image").get(function () {
   if (this.image) {
-    const baseUrl = process.env.BASE_URL || "http://localhost:5000";
-    return `${baseUrl}/uploads/book/bookcategory/${this.image}`;
+    const baseUrl = process.env.BASE_URL || "http://localhost:5006";
+    return `${baseUrl}/uploads/book/bookcategory/${this.image}`
   }
   return null;
 });

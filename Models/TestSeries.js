@@ -112,7 +112,7 @@ console.log("BASE_URL:", process.env.BASE_URL);
 // Virtual for full image URLs
 testSeriesSchema.virtual("full_image").get(function () {
   if (!this.images || this.images.length === 0) return [];
-  const baseUrl = process.env.BASE_URL || "http://localhost:5000";
+  const baseUrl = process.env.BASE_URL || "http://localhost:5006";
   return this.images.map(img => `${baseUrl}/uploads/testSeries/${img}`);
 });
 

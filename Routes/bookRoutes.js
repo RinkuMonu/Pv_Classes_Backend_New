@@ -12,8 +12,8 @@ router.post(
 
 // Get All Books
 router.get("/", bookController.getAllBooks);
-router.get("/:id", bookController.getBookById);
 router.get("/category/:categoryId", bookController.getBooksByCategoryId);
+router.get("/:id", bookController.getBookById);
 router.put(
   "/:id",
   upload("book").array("images", 5),

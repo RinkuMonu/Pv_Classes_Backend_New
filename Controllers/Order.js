@@ -1,6 +1,7 @@
 const Order = require("../Models/Order");
 const Access = require("../Models/Access");
 const Course = require("../Models/Course");
+const User = require("../Models/User");
 
 
 // exports.checkout = async (req, res) => {
@@ -133,11 +134,22 @@ exports.checkout = async (req, res) => {
         });
 
         const { courses, books, testSeries, combo } = grouped;
-        const { paymentMethod, totalAmount } = req.body;
+        const { paymentMethod, totalAmount, couponId, discountAmount, shippingAddress } = req.body;
 
 
         if ((!courses.length && !books.length && !testSeries.length && !combo.length) || !paymentMethod || !totalAmount) {
             return res.status(400).json({ message: "At least one item and all fields are required!" });
+        }
+
+
+        if (books.length > 0) {
+            const { name, phone, address, city, state, pincode } = shippingAddress || {};
+
+            if (!name || !phone || !address || !city || !state || !pincode) {
+                return res.status(400).json({
+                    message: "Complete shipping address is required for books"
+                });
+            }
         }
 
         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
@@ -151,13 +163,16 @@ exports.checkout = async (req, res) => {
             books,
             testSeries,
             combo,
+            shippingAddress,
             totalAmount: totalAmount,
             paymentMethod,
+            coupon: couponId || null,
+            discountAmount: discountAmount || 0,
             paymentStatus: "pending",
             orderStatus: "processing"
         });
         await order.save();
-       
+
         res.status(201).json({
             message: "Order created successfully. Proceed to payment.",
             order
@@ -193,11 +208,60 @@ exports.checkout = async (req, res) => {
 
 exports.getAllOrders = async (req, res) => {
     try {
-        const { userId, status, page = 1, limit = 10 } = req.query;
+        const { userId, status, search, type, page = 1, limit = 10 } = req.query;
 
         const filter = {};
         if (userId) filter.user = userId;
-        if (status) filter.orderStatus = status;
+
+        // if (status) filter.orderStatus = status;
+
+        // ✅ Status Filter
+        if (status && ["processing", "shipped","packed", "confirmed" , "completed", "cancelled"].includes(status)) {
+            filter.orderStatus = status;
+        }
+
+
+// ✅ PRODUCT TYPE FILTER
+if (type === "course") {
+  filter["courses.0"] = { $exists: true };
+}
+
+if (type === "book") {
+  filter["books.0"] = { $exists: true };
+}
+
+if (type === "testSeries") {
+  filter["testSeries.0"] = { $exists: true };
+}
+
+if (type === "combo") {
+  filter["combo.0"] = { $exists: true };
+}
+
+
+const counts = {
+  courses: await Order.countDocuments({ "courses.0": { $exists: true } }),
+  books: await Order.countDocuments({ "books.0": { $exists: true } }),
+  testSeries: await Order.countDocuments({ "testSeries.0": { $exists: true } }),
+  combo: await Order.countDocuments({ "combo.0": { $exists: true } })
+};
+
+        // ✅ SEARCH LOGIC
+        if (search) {
+
+            // Find users with matching name
+            const users = await User.find({
+                name: { $regex: search, $options: "i" }
+            }).select("_id");
+
+            const userIds = users.map((u) => u._id);
+
+            filter.$or = [
+                { transactionId: { $regex: search, $options: "i" } },
+                { paymentMethod: { $regex: search, $options: "i" } },
+                { user: { $in: userIds } } // 👤 customer name search
+            ];
+        }
 
         const skip = (page - 1) * limit;
 
@@ -215,6 +279,7 @@ exports.getAllOrders = async (req, res) => {
         res.status(200).json({
             success: true,
             orders,
+            counts,
             pagination: {
                 totalOrders,
                 currentPage: parseInt(page),
@@ -255,7 +320,7 @@ exports.changeOrderStatus = async (req, res) => {
         const { orderId } = req.params;
         const { status } = req.body;
 
-        if (!["pending", "completed", "cancelled"].includes(status)) {
+        if (!["pending", "confirmed", "packed", "shipped", "completed", "processing", "cancelled"].includes(status)) {
             return res.status(400).json({ success: false, message: "Invalid status" });
         }
 

@@ -36,6 +36,10 @@ const subRoutes = require("./Routes/subject");
 
 const paymentRoutes = require("./Routes/paymentRoutes");
 
+// ✅ CRON IMPORT
+require("./cron/orderAutoCancel");
+
+
 const app = express();
 app.use(
   cors({

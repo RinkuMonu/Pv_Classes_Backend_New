@@ -14,7 +14,7 @@ const generateToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, phone, password, role } = req.body;
+    const { name, phone, password, role, state, district } = req.body;
 
     if (!name || !phone || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -33,6 +33,8 @@ exports.register = async (req, res) => {
       phone,
       password: hashedPassword,
       role: role || "user",
+      state,
+      district
     });
 
     await user.save();
@@ -264,6 +266,7 @@ exports.getAllUserData = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
 
+
     const skip = (page - 1) * limit;
 
     let filter = {};
@@ -388,7 +391,9 @@ exports.getMyPurchases = async (req, res) => {
 
     const orders = await Order.find({
       user: userId,
-      orderStatus: "completed"
+      // orderStatus: "completed"
+      paymentStatus: "paid" // ✅ payment success hona chahiye
+
     })
       .populate({
         path: "courses.course",
@@ -431,8 +436,21 @@ exports.getMyPurchases = async (req, res) => {
       });
 
       // 🟢 Standalone Books
+      // order.books.forEach(b => {
+      //   if (b.book) purchasedBooks.push(b.book);
+      // });
+
+      // 🟢 Standalone Books
       order.books.forEach(b => {
-        if (b.book) purchasedBooks.push(b.book);
+        if (b.book) {
+          purchasedBooks.push({
+            ...b.book.toObject(),
+            orderStatus: order.orderStatus,
+            orderId: order._id,
+            paymentStatus: order.paymentStatus,
+            shippingAddress: order.shippingAddress
+          });
+        }
       });
 
       // 🟢 Standalone Test Series
