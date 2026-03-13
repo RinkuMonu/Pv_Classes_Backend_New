@@ -36,12 +36,53 @@ exports.createCategory = async (req, res) => {
 };
 
 // ✅ Get All Categories
+// exports.getCategories = async (req, res) => {
+//   try {
+//     const categories = await BookCategory.find().sort({ createdAt: -1 });
+//     res.status(200).json({ data: categories });
+//   } catch (error) {
+//     res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
+// ✅ Get All Categories (Search + Pagination)
 exports.getCategories = async (req, res) => {
   try {
-    const categories = await BookCategory.find().sort({ createdAt: -1 });
-    res.status(200).json({ data: categories });
+    let { page = 1, limit = 10, search = "" } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const query = {};
+
+    // 🔍 Search by category name
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    const totalCategories = await BookCategory.countDocuments(query);
+
+    const categories = await BookCategory.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      message: "Categories fetched successfully",
+      data: categories,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCategories / limit),
+        totalCategories,
+        limit
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message
+    });
   }
 };
 

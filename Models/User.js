@@ -6,6 +6,11 @@ const UserSchema = new mongoose.Schema(
     email: { type: String, trim: true },
     phone: { type: String, required: true, trim: true, unique: true },
     password: { type: String },
+    exam: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Exam",
+      required: true
+    },
     referral_code: { type: String, default: null },
     otp: { type: String },
     otpExpires: {
@@ -35,10 +40,11 @@ const UserSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["user", "teacher", "admin"],
-      default: "user"
+      default: "y"
     },
     experience: { type: String },
-    specialization: { type: String }
+    specialization: { type: String },
+    sessionId: { type: String, default: null } // ✅ add this
   },
   {
     timestamps: true,

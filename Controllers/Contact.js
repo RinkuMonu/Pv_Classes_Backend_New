@@ -29,15 +29,47 @@ exports.createContact = async (req, res) => {
     }
 };
 
-// 📌 Fetch all contact messages (for admin panel)
+// 📌 Fetch contacts with pagination & search
 exports.getContacts = async (req, res) => {
-    try {
-        const contacts = await Contact.find().sort({ createdAt: -1 });
-        res.status(200).json(contacts);
-    } catch (err) {
-        console.error("Error fetching contacts:", err);
-        res.status(500).json({ message: "Server error" });
+  try {
+    let { page = 1, limit = 5, search = "" } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const query = {};
+
+    // Search by firstName, lastName, email, phone
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ];
     }
+
+    const totalContacts = await Contact.countDocuments(query);
+
+    const contacts = await Contact.find(query)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      data: contacts,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalContacts / limit),
+        totalContacts,
+        limit
+      }
+    });
+
+  } catch (err) {
+    console.error("Error fetching contacts:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // 📌 Fetch a single contact message by ID

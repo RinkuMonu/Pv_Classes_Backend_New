@@ -12,7 +12,8 @@ const {
   getUserData,
   getAllUserData,
   updateUserStatus,
-  getMyPurchases
+  getMyPurchases,
+  getUsersByExam
 } = require("../Controllers/userController");
 
 router.post("/get-otp", sendOtp);
@@ -25,6 +26,8 @@ router.get("/getAllUser", auth, getAllUserData);
 router.put("/updateStatus", auth, updateUserStatus);
 
 router.get("/my-purchases", auth, getMyPurchases);
+
+router.get("/exam/:examId", getUsersByExam);
 
 const path = require("path");
 

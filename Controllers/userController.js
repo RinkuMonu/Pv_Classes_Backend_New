@@ -4,9 +4,19 @@ const bcrypt = require("bcryptjs");
 const Order = require("../Models/Order");
 const axios = require("axios");
 
-const generateToken = (user) => {
+const { v4: uuidv4 } = require("uuid");
+
+// const generateToken = (user) => {
+//   return jwt.sign(
+//     { id: user._id, phone: user.phone },
+//     process.env.JWT_SECRET,
+//     { expiresIn: "7d" }
+//   );
+// };
+
+const generateToken = (user, sessionId) => {
   return jwt.sign(
-    { id: user._id, phone: user.phone },
+    { id: user._id, phone: user.phone, sessionId },
     process.env.JWT_SECRET,
     { expiresIn: "7d" }
   );
@@ -14,9 +24,9 @@ const generateToken = (user) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, phone, password, role, state, district } = req.body;
+    const { name, phone, password, role, state, district, exam  } = req.body;
 
-    if (!name || !phone || !password) {
+    if (!name || !phone || !password || !exam) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -34,7 +44,8 @@ exports.register = async (req, res) => {
       password: hashedPassword,
       role: role || "user",
       state,
-      district
+      district,
+      exam
     });
 
     await user.save();
@@ -54,6 +65,31 @@ exports.register = async (req, res) => {
   }
 };
 
+// exports.login = async (req, res) => {
+//   try {
+//     const { phone, password } = req.body;
+
+//     const user = await User.findOne({ phone });
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Invalid credentials" });
+//     }
+
+//     res.status(200).json({
+//       message: "Login successful",
+//       token: generateToken(user),
+//       user,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ message: "Login failed", error: error.message });
+//   }
+// };
+
+
 exports.login = async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -68,15 +104,25 @@ exports.login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // ✅ generate new session
+    const sessionId = uuidv4();
+
+    user.sessionId = sessionId;
+    await user.save();
+
+    const token = generateToken(user, sessionId);
+
     res.status(200).json({
       message: "Login successful",
-      token: generateToken(user),
+      token,
       user,
     });
+
   } catch (error) {
     res.status(500).json({ message: "Login failed", error: error.message });
   }
 };
+
 
 exports.sendOtp = async (req, res) => {
   try {
@@ -467,5 +513,20 @@ exports.getMyPurchases = async (req, res) => {
   } catch (error) {
     console.error("❌ Error in getMyPurchases:", error);
     res.status(500).json({ error: error.message });
+  }
+};
+
+
+exports.getUsersByExam = async (req, res) => {
+  try {
+
+    const { examId } = req.params;
+
+    const users = await User.find({ exam: examId });
+
+    res.json(users);
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
