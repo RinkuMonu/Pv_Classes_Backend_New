@@ -157,7 +157,6 @@ exports.getAllNotifications = async (req, res) => {
   }
 };
 
-
 exports.deleteNotification = async (req, res) => {
   try {
     const { id } = req.params; // match your route

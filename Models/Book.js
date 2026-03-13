@@ -16,6 +16,18 @@ const bookSchema = new mongoose.Schema(
       type: [String], // Array of image URLs
       default: [],
     },
+
+  
+    // ✅ New Fields
+    free_pdf: {
+      type: String,
+      default: "",
+    },
+
+    paid_pdf: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -71,6 +83,22 @@ bookSchema.virtual("full_image").get(function () {
     return this.images.map(img => `${baseUrl}/uploads/book/${img}`);
   }
   return [];
+});
+
+bookSchema.virtual("free_pdf_url").get(function () {
+  if (this.free_pdf) {
+    const baseUrl = process.env.BASE_URL || "http://localhost:5006";
+    return `${baseUrl}/uploads/book/${this.free_pdf}`;
+  }
+  return null;
+});
+
+bookSchema.virtual("paid_pdf_url").get(function () {
+  if (this.paid_pdf) {
+    const baseUrl = process.env.BASE_URL || "http://localhost:5006";
+    return `${baseUrl}/uploads/book/${this.paid_pdf}`;
+  }
+  return null;
 });
 
 module.exports = mongoose.model("Book", bookSchema);

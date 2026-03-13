@@ -24,14 +24,61 @@ exports.createSubCategory = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+// exports.getSubCategories = async (req, res) => {
+//   try {
+//     const subCategories = await BookSubCategory.find();
+//     res.status(200).json({ data: subCategories });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+// ✅ Get SubCategories (Search + Pagination + Category Filter)
 exports.getSubCategories = async (req, res) => {
   try {
-    const subCategories = await BookSubCategory.find();
-    res.status(200).json({ data: subCategories });
+    let { page = 1, limit = 10, search = "", book_category_id } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const query = {};
+
+    // 🔍 Search by subcategory name
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    // 📚 Filter by category
+    if (book_category_id) {
+      query.book_category_id = book_category_id;
+    }
+
+    const totalSubCategories = await BookSubCategory.countDocuments(query);
+
+    const subCategories = await BookSubCategory.find(query)
+      .populate("book_category_id", "name")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      message: "Subcategories fetched successfully",
+      data: subCategories,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalSubCategories / limit),
+        totalSubCategories,
+        limit
+      }
+    });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 exports.updateSubCategory = async (req, res) => {
   try {
     const { name, book_category_id, status } = req.body;
