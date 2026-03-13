@@ -9,7 +9,7 @@ const UserSchema = new mongoose.Schema(
     exam: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Exam",
-      required: true
+      required: false
     },
     referral_code: { type: String, default: null },
     otp: { type: String },

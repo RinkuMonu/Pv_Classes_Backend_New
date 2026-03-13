@@ -108,7 +108,12 @@ exports.login = async (req, res) => {
     const sessionId = uuidv4();
 
     user.sessionId = sessionId;
-    await user.save();
+    // await user.save();
+
+       await User.updateOne(
+      { _id: user._id },
+      { $set: { sessionId } }
+    );
 
     const token = generateToken(user, sessionId);
 
