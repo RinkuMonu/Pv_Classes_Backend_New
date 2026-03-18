@@ -122,6 +122,69 @@ exports.getStudents = async (req, res) => {
 
 };
 
+
+exports.getStudentStats = async (req, res) => {
+  try {
+
+    // 🔹 SUBJECT WISE COUNT
+    const subjectStats = await OfflineEvent.aggregate([
+      {
+        $match: {
+          paymentStatus: "paid"
+        }
+      },
+      { $unwind: "$teachingSubjects" },
+      {
+        $group: {
+          _id: "$teachingSubjects",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 🔹 DISABILITY COUNT
+    const disabilityStats = await OfflineEvent.aggregate([
+      {
+        $match: {
+          paymentStatus: "paid",
+          disabilitySpecialization: { $ne: null }
+        }
+      },
+      {
+        $group: {
+          _id: "$disabilitySpecialization",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 🔹 FORMAT SUBJECT DATA (all subjects include karo)
+    const subjects = ["maths", "sst", "hindi", "english", "science"];
+
+    const formattedSubjects = subjects.map(sub => {
+      const found = subjectStats.find(s => s._id === sub);
+      return {
+        subject: sub,
+        count: found ? found.count : 0
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        subjects: formattedSubjects,
+        disability: disabilityStats
+      }
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    });
+  }
+};
+
+
 exports.getStudentById = async (req, res) => {
 
     try {
