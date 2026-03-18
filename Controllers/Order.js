@@ -1,6 +1,7 @@
 const Order = require("../Models/Order");
 const Access = require("../Models/Access");
 const Course = require("../Models/Course");
+const TestSeries = require("../Models/TestSeries");
 const User = require("../Models/User");
 const Book = require("../Models/Book");
 const Combo = require("../Models/Combo");
@@ -242,15 +243,15 @@ exports.checkout = async (req, res) => {
             return res.status(400).json({ message: "At least one item and all fields are required!" });
         }
 
-        if (books.length > 0) {
-            const { name, phone, address, city, state, pincode } = shippingAddress || {};
+        // if (books.length > 0) {
+        //     const { name, phone, address, city, state, pincode } = shippingAddress || {};
 
-            if (!name || !phone || !address || !city || !state || !pincode) {
-                return res.status(400).json({
-                    message: "Complete shipping address is required for books"
-                });
-            }
-        }
+        //     if (!name || !phone || !address || !city || !state || !pincode) {
+        //         return res.status(400).json({
+        //             message: "Complete shipping address is required for books"
+        //         });
+        //     }
+        // }
 
         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
             return res.status(400).json({ message: "Invalid payment method" });
@@ -268,7 +269,9 @@ exports.checkout = async (req, res) => {
         }
 
         for (const item of testSeries) {
-            const test = await Course.findById(item.test);
+
+            const test = await TestSeries.findById(item.test);
+
             if (!test) continue;
 
             const price = test.price;
@@ -366,35 +369,35 @@ exports.getAllOrders = async (req, res) => {
         // if (status) filter.orderStatus = status;
 
         // ✅ Status Filter
-        if (status && ["processing", "shipped","packed", "confirmed" , "completed", "cancelled"].includes(status)) {
+        if (status && ["processing", "shipped", "packed", "confirmed", "completed", "cancelled"].includes(status)) {
             filter.orderStatus = status;
         }
 
 
-// ✅ PRODUCT TYPE FILTER
-if (type === "course") {
-  filter["courses.0"] = { $exists: true };
-}
+        // ✅ PRODUCT TYPE FILTER
+        if (type === "course") {
+            filter["courses.0"] = { $exists: true };
+        }
 
-if (type === "book") {
-  filter["books.0"] = { $exists: true };
-}
+        if (type === "book") {
+            filter["books.0"] = { $exists: true };
+        }
 
-if (type === "testSeries") {
-  filter["testSeries.0"] = { $exists: true };
-}
+        if (type === "testSeries") {
+            filter["testSeries.0"] = { $exists: true };
+        }
 
-if (type === "combo") {
-  filter["combo.0"] = { $exists: true };
-}
+        if (type === "combo") {
+            filter["combo.0"] = { $exists: true };
+        }
 
 
-const counts = {
-  courses: await Order.countDocuments({ "courses.0": { $exists: true } }),
-  books: await Order.countDocuments({ "books.0": { $exists: true } }),
-  testSeries: await Order.countDocuments({ "testSeries.0": { $exists: true } }),
-  combo: await Order.countDocuments({ "combo.0": { $exists: true } })
-};
+        const counts = {
+            courses: await Order.countDocuments({ "courses.0": { $exists: true } }),
+            books: await Order.countDocuments({ "books.0": { $exists: true } }),
+            testSeries: await Order.countDocuments({ "testSeries.0": { $exists: true } }),
+            combo: await Order.countDocuments({ "combo.0": { $exists: true } })
+        };
 
         // ✅ SEARCH LOGIC
         if (search) {

@@ -15,14 +15,12 @@ const UserSchema = new mongoose.Schema(
     otp: { type: String },
     otpExpires: {
       type: Date,
-      index: { expires: 300 }, // 300 sec = 5 min auto expire
     },
 
     // 🔑 Forgot password OTP
     resetPasswordOtp: { type: String },
     resetPasswordExpires: {
       type: Date,
-      index: { expires: 600 }, // 600 sec = 10 min auto expire
     },
 
     address: { type: String },

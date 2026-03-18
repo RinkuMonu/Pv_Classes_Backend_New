@@ -6,6 +6,7 @@ const Course = require("../Models/Course");
 const Combo = require("../Models/Combo");
 const Cart = require("../Models/Cart");
 const Coupon = require("../Models/coupon");
+const OfflineEvent = require("../Models/OfflineInterview");
 
 // 🔹 Reference Generator
 const generateReference = () => {
@@ -235,6 +236,17 @@ exports.paymentCallback = async (req, res) => {
                     order.coupon,
                     {
                         $addToSet: { usedBy: order.user }
+                    }
+                );
+            }
+
+            // ✅ UPDATE STUDENT PAYMENT STATUS
+            if (order.offlineStudent) {
+                await OfflineEvent.findByIdAndUpdate(
+                    order.offlineStudent,
+                    {
+                        paymentStatus: "paid",
+                        paymentReference: order.paymentReference
                     }
                 );
             }
