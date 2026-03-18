@@ -18,7 +18,7 @@ exports.checkAccess = async (req, res) => {
             return res.status(200).json({ message: "Access granted (direct)", access: directAccess });
         }
 
-        
+
         // 2️⃣ Check if user purchased this item directly or via combo
         const orders = await Order.find({
             user: userId,
@@ -38,7 +38,11 @@ exports.checkAccess = async (req, res) => {
                 hasAccess = true;
                 break;
             }
-            if (order.books.some(b => b.book._id.toString() === itemId)) {
+            // if (order.books.some(b => b.book._id.toString() === itemId)) {
+            //     hasAccess = true;
+            //     break;
+            // }
+            if (order.books.some(b => b.book && b.book._id.toString() === itemId)) {
                 hasAccess = true;
                 break;
             }

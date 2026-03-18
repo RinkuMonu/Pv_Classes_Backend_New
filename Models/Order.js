@@ -35,6 +35,11 @@ const OrderSchema = new mongoose.Schema({
         }
     ],
 
+    offlineStudent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "OfflineInterview"
+    },
+
     shippingAddress: {
         name: String,
         phone: String,
