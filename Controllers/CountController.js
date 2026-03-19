@@ -57,6 +57,12 @@ const TestSeries = require("../Models/TestSeries");
 const Note = require("../Models/Note");
 const Doubt = require("../Models/Doubt");
 
+
+const validOrderFilter = {
+  paymentStatus: "paid",
+  orderStatus: "completed"
+};
+
 exports.getCounts = async (req, res) => {
   try {
 
@@ -66,51 +72,107 @@ exports.getCounts = async (req, res) => {
     const todayEnd = new Date();
     todayEnd.setHours(23,59,59,999);
 
-    const [
-      totalUsers,
-      totalOrders,
-      totalCourses,
-      totalFaqs,
-      totalTestSeries,
-      totalNotes,
-      totalDoubts,
+    // const [
+    //   totalUsers,
+    //   totalOrders,
+    //   totalCourses,
+    //   totalFaqs,
+    //   totalTestSeries,
+    //   totalNotes,
+    //   totalDoubts,
 
-      todayUsers,
-      todayOrders,
+    //   todayUsers,
+    //   todayOrders,
 
-      totalRevenue,
-      todayRevenue
-    ] = await Promise.all([
+    //   totalRevenue,
+    //   todayRevenue
+    // ] = await Promise.all([
 
-      User.countDocuments(),
-      Order.countDocuments(),
-      Course.countDocuments(),
-      FAQ.countDocuments(),
-      TestSeries.countDocuments(),
-      Note.countDocuments(),
-      Doubt.countDocuments(),
+    //   User.countDocuments(),
+    //   Order.countDocuments(),
+    //   Course.countDocuments(),
+    //   FAQ.countDocuments(),
+    //   TestSeries.countDocuments(),
+    //   Note.countDocuments(),
+    //   Doubt.countDocuments(),
 
-      User.countDocuments({ createdAt:{ $gte: todayStart,$lte:todayEnd } }),
-      Order.countDocuments({ createdAt:{ $gte: todayStart,$lte:todayEnd } }),
+    //   User.countDocuments({ createdAt:{ $gte: todayStart,$lte:todayEnd } }),
+    //   Order.countDocuments({ createdAt:{ $gte: todayStart,$lte:todayEnd } }),
 
-      Order.aggregate([
-        { $match:{ paymentStatus:"paid"} },
-        { $group:{ _id:null,total:{ $sum:"$totalAmount"}}}
-      ]),
+    //   Order.aggregate([
+    //     { $match:{ paymentStatus:"paid"} },
+    //     { $group:{ _id:null,total:{ $sum:"$totalAmount"}}}
+    //   ]),
 
-      Order.aggregate([
-        {
-          $match:{
-            paymentStatus:"paid",
-            createdAt:{ $gte:todayStart,$lte:todayEnd }
-          }
-        },
-        { $group:{ _id:null,total:{ $sum:"$totalAmount"}}}
-      ])
+    //   Order.aggregate([
+    //     {
+    //       $match:{
+    //         paymentStatus:"paid",
+    //         createdAt:{ $gte:todayStart,$lte:todayEnd }
+    //       }
+    //     },
+    //     { $group:{ _id:null,total:{ $sum:"$totalAmount"}}}
+    //   ])
 
-    ]);
+    // ]);
 
     // last 7 days orders
+   
+   
+    const [
+  totalUsers,
+  totalOrders,
+  totalCourses,
+  totalFaqs,
+  totalTestSeries,
+  totalNotes,
+  totalDoubts,
+
+  todayUsers,
+  todayOrders,
+
+  totalRevenue,
+  todayRevenue
+] = await Promise.all([
+
+  User.countDocuments(),
+
+  // ✅ ONLY PAID + COMPLETED
+  Order.countDocuments(validOrderFilter),
+
+  Course.countDocuments(),
+  FAQ.countDocuments(),
+  TestSeries.countDocuments(),
+  Note.countDocuments(),
+  Doubt.countDocuments(),
+
+  User.countDocuments({ createdAt: { $gte: todayStart, $lte: todayEnd } }),
+
+  // ✅ TODAY VALID ORDERS
+  Order.countDocuments({
+    ...validOrderFilter,
+    createdAt: { $gte: todayStart, $lte: todayEnd }
+  }),
+
+  // ✅ TOTAL REVENUE (ONLY VALID)
+  Order.aggregate([
+    { $match: validOrderFilter },
+    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+  ]),
+
+  // ✅ TODAY REVENUE (ONLY VALID)
+  Order.aggregate([
+    {
+      $match: {
+        ...validOrderFilter,
+        createdAt: { $gte: todayStart, $lte: todayEnd }
+      }
+    },
+    { $group: { _id: null, total: { $sum: "$totalAmount" } } }
+  ])
+
+]);
+   
     const last7Days = await Order.aggregate([
       {
         $match:{
