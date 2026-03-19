@@ -51,7 +51,7 @@ const authMiddleware = async (req, res, next) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-   // ✅ Only apply session restriction for students
+    // ✅ Only apply session restriction for students
     if (user.role === "user") {
 
       if (user.sessionId !== decoded.sessionId) {

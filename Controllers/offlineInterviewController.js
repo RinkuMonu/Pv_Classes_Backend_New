@@ -352,7 +352,7 @@ exports.sendNotification = async (req, res) => {
                 .toLocaleDateString("en-IN");
 
             const eventType = student.type === "test"
-                ? "Offline Test"
+                ? "Test"
                 : "Interview";
 
             await axios.post(
