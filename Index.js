@@ -37,6 +37,8 @@ const subRoutes = require("./Routes/subject");
 const paymentRoutes = require("./Routes/paymentRoutes");
 const OfflineInterviewRoutes = require("./Routes/offlineInterviewRoutes");
 
+const emailRoutes = require("./Routes/emailVarifyRoutes");
+
 // ✅ CRON IMPORT
 require("./cron/orderAutoCancel");
 
@@ -100,6 +102,8 @@ app.use("/api/sub", subRoutes);
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/offline-interview", OfflineInterviewRoutes);
+
+app.use("/api", emailRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
