@@ -59,21 +59,21 @@ exports.createTestSeries = async (req, res) => {
       String(is_free).replace(/"/g, '').trim().toLowerCase() === 'true';
 
     const testSeries = await TestSeries.create({
-  exam_id,
-  title,
-  title_tag,
-  description,
-  price,
-  discount_price,
-  validity,
-  total_tests,
-  subjects,
-  is_active,
-  is_free: is_free !== undefined ? String(is_free).replace(/"/g,'').trim().toLowerCase() === 'true' : true,
-  images,
-  tests: [],
-  attempts: []
-});
+      exam_id,
+      title,
+      title_tag,
+      description,
+      price,
+      discount_price,
+      validity,
+      total_tests,
+      subjects,
+      is_active,
+      is_free: is_free !== undefined ? String(is_free).replace(/"/g, '').trim().toLowerCase() === 'true' : true,
+      images,
+      tests: [],
+      attempts: []
+    });
 
 
     res.status(201).json({
@@ -175,7 +175,7 @@ exports.updateTestSeries = async (req, res) => {
   try {
     const {
       exam_id, title, title_tag, description,
-      price, discount_price, validity, total_tests, is_active
+      price, discount_price, validity, total_tests, is_active, is_free
     } = req.body;
 
     let subjects;
@@ -189,12 +189,19 @@ exports.updateTestSeries = async (req, res) => {
       images = req.files.map(file => file.filename); // keep only filename
     }
 
+
+
     const updateData = {
       exam_id, title, title_tag, description, price,
       discount_price, validity, total_tests, is_active
     };
     if (subjects) updateData.subjects = subjects;
     if (images) updateData.images = images;
+
+    if (is_free !== undefined) {
+      updateData.is_free =
+        String(is_free).trim().toLowerCase() === "true";
+    }
 
     const series = await TestSeries.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!series) return res.status(404).json({ success: false, message: "Test Series not found" });
@@ -302,7 +309,7 @@ exports.deleteQuestionFromEmbeddedTest = async (req, res) => {
     }
 
     test.questions = clean(test.questions);
-    const questionIndex = test.questions.findIndex(q => 
+    const questionIndex = test.questions.findIndex(q =>
       q && q._id && String(q._id) === String(questionId)
     );
 
@@ -316,8 +323,8 @@ exports.deleteQuestionFromEmbeddedTest = async (req, res) => {
     await series.save();
 
     log("OK question deleted");
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       message: "Question deleted successfully",
       deletedQuestionId: questionId
     });

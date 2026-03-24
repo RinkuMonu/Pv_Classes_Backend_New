@@ -17,7 +17,7 @@ const bookSchema = new mongoose.Schema(
       default: [],
     },
 
-  
+
     // ✅ New Fields
     free_pdf: {
       type: String,
@@ -46,6 +46,10 @@ const bookSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    is_free: {
+      type: Boolean,
+      default: false, // default paid
+    },
     price: {
       type: Number,
       required: true,
@@ -58,10 +62,10 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    language:{
-      type:String,
-      default:'hindi',
-      required:true
+    language: {
+      type: String,
+      default: 'hindi',
+      required: true
     },
 
     // ✅ Key Features as array of objects
@@ -72,7 +76,8 @@ const bookSchema = new mongoose.Schema(
       }
     ]
   },
-  { timestamps: true,
+  {
+    timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
   }

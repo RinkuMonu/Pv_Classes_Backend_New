@@ -84,7 +84,7 @@ const testSeriesSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true },
     title_tag: { type: String, trim: true },
     description: { type: String, trim: true },
-    price: { type: Number, required: true },
+    price: { type: Number, required: false },
     discount_price: { type: Number, default: 0 },
     validity: { type: String, required: true },
     total_tests: { type: Number, default: 0 },
@@ -92,10 +92,10 @@ const testSeriesSchema = new mongoose.Schema(
     is_active: { type: Boolean, default: true },
     images: { type: [String], default: [] },
 
-   is_free: {
-  type: Boolean,
-  default: true,  // ✅ default free
-},
+    is_free: {
+      type: Boolean,
+      default: true,  // ✅ default free
+    },
     // NEW: all tests/questions live here
     tests: { type: [embeddedTestSchema], default: [] },
 

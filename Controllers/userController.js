@@ -24,7 +24,7 @@ const generateToken = (user, sessionId) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, phone, password, role, state, district, exam  } = req.body;
+    const { name, phone, password, role, state, district, exam } = req.body;
 
     if (!name || !phone || !password || !exam) {
       return res.status(400).json({ message: "All fields are required" });
@@ -110,7 +110,7 @@ exports.login = async (req, res) => {
     user.sessionId = sessionId;
     // await user.save();
 
-       await User.updateOne(
+    await User.updateOne(
       { _id: user._id },
       { $set: { sessionId } }
     );
@@ -533,5 +533,203 @@ exports.getUsersByExam = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+
+
+// exports.sendWhatsAppNotification = async (req, res) => {
+//   try {
+//     const { title, exam, testDate, lastDate, location } = req.body;
+
+//     if (!title || !exam || !testDate || !lastDate || !location) {
+//       return res.status(400).json({ message: "All fields are required" });
+//     }
+
+//     const users = await User.find({ status: "active" });
+
+//     if (!users.length) {
+//       return res.status(404).json({ message: "No users found" });
+//     }
+
+//     // ✅ valid phone filter
+//     // const phoneNumbers = users
+//     //   .map(user => user.phone)
+//     //   .filter(p => p && p.length >= 10);
+
+//     const phoneNumbers = users
+//       .map(user => user.phone)
+//       .filter(p => p && p.length >= 10)
+//       .map(p => p.startsWith("91") ? p : `91${p}`);
+
+//     console.log("Sending to:", phoneNumbers.length, "users");
+//     console.log("Sending to:", phoneNumbers);
+
+
+//     // ✅ batching function
+//     const chunkArray = (array, size) => {
+//       const result = [];
+//       for (let i = 0; i < array.length; i += size) {
+//         result.push(array.slice(i, i + size));
+//       }
+//       return result;
+//     };
+
+//     const batches = chunkArray(phoneNumbers, 100); // 👈 100 per batch
+//     // const batches = chunkArray(916367239473, 100); // 👈 100 per batch
+
+//     let allResponses = [];
+
+//     for (const batch of batches) {
+//       const payload = {
+//         integrated_number: process.env.MSG91_INTEGRATED_NUMBER,
+//         content_type: "template",
+//         payload: {
+//           messaging_product: "whatsapp",
+//           type: "template",
+//           template: {
+//             name: "testannouncement",
+//             language: {
+//               code: "hi",
+//               policy: "deterministic"
+//             },
+//             namespace: process.env.MSG91_NAMESPACE,
+//             to_and_components: [
+//               {
+//                 to: batch, // 👈 batch send
+//                 components: {
+//                   body_1: { type: "text", value: exam },
+//                   body_2: { type: "text", value: `टेस्ट की तारीख: ${testDate}` },
+//                   body_3: { type: "text", value: `अंतिम तिथि: ${lastDate}` },
+//                   body_4: { type: "text", value: `⚠️ ${lastDate} के बाद रजिस्ट्रेशन बंद` },
+//                   body_5: { type: "text", value: location }
+//                 }
+//               }
+//             ]
+//           }
+//         }
+//       };
+
+//       const response = await axios.post(
+//         "https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/",
+//         payload,
+//         {
+//           headers: {
+//             "Content-Type": "application/json",
+//             authkey: process.env.MSG91_AUTH_KEY
+//           }
+//         }
+//       );
+
+//       allResponses.push(response.data);
+//     }
+
+//     res.status(200).json({
+//       message: "WhatsApp notifications sent successfully",
+//       batches: batches.length,
+//       data: allResponses
+//     });
+
+//   } catch (error) {
+//     console.error(error.response?.data || error.message);
+//     res.status(500).json({
+//       message: "Failed to send WhatsApp notifications",
+//       error: error.response?.data || error.message
+//     });
+//   }
+// };
+
+exports.sendWhatsAppNotification = async (req, res) => {
+  try {
+    const { title, exam, testDate, lastDate, location } = req.body;
+
+    if (!title || !exam || !testDate || !lastDate || !location) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const users = await User.find({ status: "active" });
+
+    if (!users.length) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    // ✅ Format numbers (91 prefix)
+    const phoneNumbers = users
+      .map(user => user.phone)
+      .filter(p => p && p.length >= 10)
+      .map(p => p.startsWith("91") ? p : `91${p}`);
+
+    console.log("Sending to:", phoneNumbers.length);
+
+    // ✅ batching
+    const chunkArray = (array, size) => {
+      const result = [];
+      for (let i = 0; i < array.length; i += size) {
+        result.push(array.slice(i, i + size));
+      }
+      return result;
+    };
+
+    const batches = chunkArray(phoneNumbers, 100);
+    // const batches = chunkArray(916367239473, 100);
+
+    let allResponses = [];
+
+    for (const batch of batches) {
+      const payload = {
+        integrated_number: process.env.MSG91_INTEGRATED_NUMBER,
+        content_type: "template",
+        payload: {
+          messaging_product: "whatsapp",
+          type: "template",
+          template: {
+            name: "testannouncement2", // ✅ FIXED
+            language: {
+              code: "hi",
+              policy: "deterministic"
+            },
+            namespace: process.env.MSG91_NAMESPACE,
+            to_and_components: [
+              {
+                to: batch,
+                components: {
+                  body_1: { type: "text", value: title },      // ✅ use title
+                  body_2: { type: "text", value: exam },
+                  body_3: { type: "text", value: testDate },
+                  body_4: { type: "text", value: lastDate },
+                  body_5: { type: "text", value: location }
+                }
+              }
+            ]
+          }
+        }
+      };
+
+      const response = await axios.post(
+        "https://api.msg91.com/api/v5/whatsapp/whatsapp-outbound-message/bulk/",
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            authkey: process.env.MSG91_AUTH_KEY
+          }
+        }
+      );
+
+      allResponses.push(response.data);
+    }
+
+    res.status(200).json({
+      message: "WhatsApp notifications sent successfully",
+      batches: batches.length,
+      data: allResponses
+    });
+
+  } catch (error) {
+    console.error(error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to send WhatsApp notifications",
+      error: error.response?.data || error.message
+    });
   }
 };

@@ -9,7 +9,6 @@ const Coupon = require("../Models/coupon");
 
 
 
-
 // exports.checkout = async (req, res) => {
 
 //     try {
