@@ -14,7 +14,8 @@ exports.createBook = async (req, res) => {
       discount_price,
       stock,
       book_key_features,
-      language
+      language,
+      is_free
     } = req.body;
 
 
@@ -24,7 +25,7 @@ exports.createBook = async (req, res) => {
     //   images = req.files.map((file) => file.filename);
     // }
 
-       let images = [];
+    let images = [];
     let free_pdf = "";
     let paid_pdf = "";
 
@@ -51,10 +52,13 @@ exports.createBook = async (req, res) => {
       discount_price,
       stock,
       language,
-    book_key_features: book_key_features ? JSON.parse(book_key_features) : [],
+      book_key_features: book_key_features ? JSON.parse(book_key_features) : [],
       images,
-       free_pdf,
+      free_pdf,
       paid_pdf,
+      is_free: is_free !== undefined
+        ? String(is_free).trim().toLowerCase() === "true"
+        : false,
     });
 
     const savedBook = await newBook.save();
@@ -168,6 +172,7 @@ exports.getAllBooks = async (req, res) => {
 
       acc[subCatId].books.push({
         _id: book._id,
+        is_free: book.is_free,
         category: {
           _id: book.book_category_id?._id,
           name: book.book_category_id?.name,
@@ -223,7 +228,7 @@ exports.getBookById = async (req, res) => {
 exports.getBooksByCategoryId = async (req, res) => {
   try {
     const books = await Book.find({ book_category_id: req.params.categoryId })
-  .populate('book_category_id', 'name');  // Populate only the category name
+      .populate('book_category_id', 'name');  // Populate only the category name
     if (!books || books.length === 0) {
       return res.status(404).json({ message: "No books found in this category" });
     }
@@ -247,6 +252,7 @@ exports.updateBook = async (req, res) => {
       stock,
       book_key_features,
       language,
+      is_free,
     } = req.body;
 
     let updateData = {
@@ -260,7 +266,7 @@ exports.updateBook = async (req, res) => {
       discount_price,
       stock,
       language,
-     book_key_features: book_key_features
+      book_key_features: book_key_features
         ? JSON.parse(book_key_features)
         : [],
     };
@@ -271,16 +277,21 @@ exports.updateBook = async (req, res) => {
     // }
 
     if (req.files?.free_pdf) {
-  updateData.free_pdf = req.files.free_pdf[0].filename;
-}
+      updateData.free_pdf = req.files.free_pdf[0].filename;
+    }
 
-if (req.files?.paid_pdf) {
-  updateData.paid_pdf = req.files.paid_pdf[0].filename;
-}
+    if (req.files?.paid_pdf) {
+      updateData.paid_pdf = req.files.paid_pdf[0].filename;
+    }
 
-if (req.files?.images) {
-  updateData.images = req.files.images.map(file => file.filename);
-}
+    if (req.files?.images) {
+      updateData.images = req.files.images.map(file => file.filename);
+    }
+
+    if (is_free !== undefined) {
+      updateData.is_free =
+        String(is_free).trim().toLowerCase() === "true";
+    }
 
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
@@ -291,6 +302,7 @@ if (req.files?.images) {
     if (!updatedBook) {
       return res.status(404).json({ message: "Book not found" });
     }
+
 
     res.status(200).json({
       message: "Book updated successfully",

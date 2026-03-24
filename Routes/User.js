@@ -13,7 +13,8 @@ const {
   getAllUserData,
   updateUserStatus,
   getMyPurchases,
-  getUsersByExam
+  getUsersByExam,
+  sendWhatsAppNotification
 } = require("../Controllers/userController");
 
 router.post("/get-otp", sendOtp);
@@ -41,6 +42,8 @@ router.put(
   upload().single("profile_image"),
   updateUser
 );
+
+router.post("/send-whatsapp", auth, sendWhatsAppNotification);
 
 
 module.exports = router;
