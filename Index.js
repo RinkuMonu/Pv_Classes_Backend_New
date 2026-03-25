@@ -42,7 +42,6 @@ const emailRoutes = require("./Routes/emailVarifyRoutes");
 // ✅ CRON IMPORT
 require("./cron/orderAutoCancel");
 
-
 const app = express();
 app.use(
   cors({
