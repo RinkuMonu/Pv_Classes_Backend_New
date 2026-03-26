@@ -20,7 +20,7 @@ CurrentAffairSchema.index({ title: "text", content: "text", tags: "text" });
 CurrentAffairSchema.virtual("full_image").get(function () {
   if (this.image) {
     const baseUrl = process.env.BASE_URL || "http://localhost:5006";
-    return `${baseUrl}/uploads/currentAffairs/${this.image}`;
+    return `${baseUrl}/uploads/currentaffair/${this.image}`;
   }
   return null;
 });
