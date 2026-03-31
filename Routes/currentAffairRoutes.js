@@ -20,7 +20,7 @@ router.put(
   updateCurrentAffair
 );
 router.delete("/:id", deleteCurrentAffair);
-// Blog Routes (form-data with image)
+
 router.post(
   "/",
   upload("currentaffair").single("image"), // upload to uploads/currentaffair

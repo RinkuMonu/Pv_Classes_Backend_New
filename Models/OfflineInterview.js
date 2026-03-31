@@ -33,12 +33,17 @@ const OfflineInterviewSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["interview", "test"],
-      default: "test"
+      default: "interview"
     },
 
     rollNumber: {
       type: String
+    },
+
+    interviewType: {
+      type: String,
+      enum: ["TGT", "PRT"],
+      required: true
     },
 
     qualification: {
@@ -51,39 +56,6 @@ const OfflineInterviewSchema = new mongoose.Schema(
 
     state: {
       type: String
-    },
-
-    paymentStatus: {
-      type: String,
-      enum: ["pending", "paid"],
-      default: "pending"
-    },
-
-    paymentReference: {
-      type: String
-    },
-
-    amount: {
-      type: Number,
-      default: 450
-    },
-
-    // NEW FIELD (user 2 subject select kar sakta hai)
-    teachingSubjects: {
-      type: [String],
-      enum: ["maths", "sst", "hindi", "english", "science"],
-      validate: {
-        validator: function (value) {
-          return value.length <= 2;
-        },
-        message: "Only 2 subjects allowed"
-      }
-    },
-
-    // NEW FIELD (disability specialization)
-    disabilitySpecialization: {
-      type: String,
-      enum: ["Intellectual-Disability"] // Intellectual Disability
     },
 
 

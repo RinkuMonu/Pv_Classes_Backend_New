@@ -39,6 +39,9 @@ const OfflineInterviewRoutes = require("./Routes/offlineInterviewRoutes");
 
 const emailRoutes = require("./Routes/emailVarifyRoutes");
 
+const studentResultRoutes = require("./Routes/studentResultRoutes");
+
+
 // ✅ CRON IMPORT
 require("./cron/orderAutoCancel");
 
@@ -88,6 +91,7 @@ app.use("/api/test-series", testSeriesRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/combo", comboRoutes);
 
+
 // app.use("/api/cart", cartRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/checkout", checkoutRouter);
@@ -101,6 +105,9 @@ app.use("/api/sub", subRoutes);
 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/offline-interview", OfflineInterviewRoutes);
+
+app.use("/api/results", studentResultRoutes);
+
 
 app.use("/api", emailRoutes);
 

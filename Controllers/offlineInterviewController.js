@@ -1,116 +1,44 @@
 
 const OfflineEvent = require("../Models/OfflineInterview");
-const Order = require("../Models/Order");
 
 const axios = require("axios");
 
 
-// exports.registerStudent = async (req, res) => {
-
-//     try {
-
-//         const {
-//             name,
-//             fatherName,
-//             motherName,
-//             email,
-//             mobile,
-//             exam,
-//             type,
-//             rollNumber,
-//             qualification,
-//             city,
-//             state,
-//             teachingSubjects,
-//             disabilitySpecialization
-//         } = req.body;
-
-//         if (!name || !mobile || !exam || !type) {
-//             return res.status(400).json({
-//                 message: "Required fields missing"
-//             });
-//         }
-
-//         const student = new OfflineEvent({
-//             name,
-//             fatherName,
-//             motherName,
-//             email,
-//             mobile,
-//             exam,
-//             type,
-//             rollNumber,
-//             qualification,
-//             city,
-//             state,
-//             teachingSubjects,
-//             disabilitySpecialization
-//         });
-
-//         await student.save();
-
-//         res.json({
-//             message: "Form submitted successfully",
-//             data: student
-//         });
-
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-
-// };
-
-
-
 exports.registerStudent = async (req, res) => {
-  try {
-    const data = req.body;
 
-    const student = new OfflineEvent({
-      ...data,
-      type: "test",
-      amount: 450
-    });
+    try {
 
-    await student.save();
+        const { name, mobile, exam, interviewType } = req.body;
 
-    // ✅ Create order for this student
-    const order = new Order({
-      user: req.user.id, // optional
-      offlineStudent: student._id, // 🔥 link student
-      totalAmount: 450,
-      paymentMethod: "upi",
-      paymentStatus: "pending",
-      orderStatus: "processing"
-    });
+        if (!name || !mobile || !exam || !interviewType) {
+            return res.status(400).json({
+                message: "name, mobile, exam, interviewType are required"
+            });
+        }
+        const student = new OfflineEvent({
+            ...req.body,
+            type: "interview"
 
-    await order.save();
+        });
 
-    res.json({
-      message: "Form submitted, proceed to payment",
-      studentId: student._id,
-      orderId: order._id
-    });
+        await student.save();
 
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+        res.json({
+            message: "Form submitted successfully",
+            studentId: student._id,
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 };
 
 exports.getStudents = async (req, res) => {
 
     try {
 
-        const { type } = req.query;
-
-        let filter = {};
-
-        if (type) {
-            filter.type = type;
-        }
-
         const students = await OfflineEvent
-            .find(filter)
+            .find()
             .populate("exam")
             .sort({ createdAt: -1 });
 
@@ -122,75 +50,11 @@ exports.getStudents = async (req, res) => {
 
 };
 
-
-exports.getStudentStats = async (req, res) => {
-  try {
-
-    // 🔹 SUBJECT WISE COUNT
-    const subjectStats = await OfflineEvent.aggregate([
-      {
-        $match: {
-          paymentStatus: "paid"
-        }
-      },
-      { $unwind: "$teachingSubjects" },
-      {
-        $group: {
-          _id: "$teachingSubjects",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // 🔹 DISABILITY COUNT
-    const disabilityStats = await OfflineEvent.aggregate([
-      {
-        $match: {
-          paymentStatus: "paid",
-          disabilitySpecialization: { $ne: null }
-        }
-      },
-      {
-        $group: {
-          _id: "$disabilitySpecialization",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // 🔹 FORMAT SUBJECT DATA (all subjects include karo)
-    const subjects = ["maths", "sst", "hindi", "english", "science"];
-
-    const formattedSubjects = subjects.map(sub => {
-      const found = subjectStats.find(s => s._id === sub);
-      return {
-        subject: sub,
-        count: found ? found.count : 0
-      };
-    });
-
-    res.json({
-      success: true,
-      data: {
-        subjects: formattedSubjects,
-        disability: disabilityStats
-      }
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-
 exports.getStudentById = async (req, res) => {
 
     try {
 
         const { id } = req.params;
-
         const student = await OfflineEvent
             .findById(id)
             .populate("exam");
@@ -211,17 +75,15 @@ exports.getStudentById = async (req, res) => {
         res.status(500).json({
             message: error.message
         });
-
     }
 
 };
-
 
 exports.createGroups = async (req, res) => {
 
     try {
 
-        const { groupSize, type } = req.body;
+        const { groupSize } = req.body;
 
         if (!groupSize || groupSize <= 0) {
             return res.status(400).json({
@@ -229,17 +91,11 @@ exports.createGroups = async (req, res) => {
             });
         }
 
-        if (!type) {
-            return res.status(400).json({
-                message: "type is required (test or interview)"
-            });
-        }
 
         // only same type students
         const students = await OfflineEvent
             .find({
                 groupNumber: null,
-                type: type
             })
             .sort({ createdAt: 1 });
 
@@ -253,7 +109,6 @@ exports.createGroups = async (req, res) => {
         const lastGroup = await OfflineEvent
             .findOne({
                 groupNumber: { $ne: null },
-                type: type
             })
             .sort({ groupNumber: -1 });
 
@@ -271,12 +126,10 @@ exports.createGroups = async (req, res) => {
             }
 
             group++;
-
         }
 
         res.json({
             message: "Groups created successfully",
-            type: type,
             totalStudents: students.length
         });
 
@@ -289,7 +142,6 @@ exports.createGroups = async (req, res) => {
     }
 
 };
-
 
 exports.scheduleEvent = async (req, res) => {
 
@@ -313,7 +165,6 @@ exports.scheduleEvent = async (req, res) => {
             student.location = location;
 
             await student.save();
-
         }
 
         res.json({
@@ -323,7 +174,6 @@ exports.scheduleEvent = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-
 };
 
 
@@ -331,11 +181,10 @@ exports.sendNotification = async (req, res) => {
 
     try {
 
-        const { groupNumber, type } = req.body;
+        const { groupNumber } = req.body;
 
         const students = await OfflineEvent.find({
             groupNumber,
-            type
         });
 
         if (students.length === 0) {
@@ -351,9 +200,7 @@ exports.sendNotification = async (req, res) => {
             const formattedDate = new Date(student.scheduleDate)
                 .toLocaleDateString("en-IN");
 
-            const eventType = student.type === "test"
-                ? "Test"
-                : "Interview";
+            const eventType = "Interview";
 
             await axios.post(
                 "https://control.msg91.com/api/v5/flow",

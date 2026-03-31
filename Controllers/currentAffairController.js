@@ -60,15 +60,15 @@ exports.createCurrentAffair = async (req, res) => {
 // Get All Blogs (with advanced filters)
 exports.getCurrentAffairs = async (req, res) => {
   try {
-    const { 
-      category, 
-      search, 
-      latest, 
-      limit, 
-      status, 
-      tags, 
-      startDate, 
-      endDate 
+    const {
+      category,
+      search,
+      latest,
+      limit,
+      status,
+      tags,
+      startDate,
+      endDate
     } = req.query;
 
     let filter = {};
@@ -87,7 +87,7 @@ exports.getCurrentAffairs = async (req, res) => {
     // Tags filter (case-insensitive match)
     if (tags) {
       const tagsArray = tags.split(",").map(tag => tag.trim().toLowerCase());
-      filter.tags = { 
+      filter.tags = {
         $in: tagsArray.map(tag => new RegExp(`^${tag}$`, "i"))
       };
     }
@@ -126,6 +126,7 @@ exports.getCurrentAffairs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Get Single Blog Detail
 exports.getCurrentAffairBySlug = async (req, res) => {
@@ -181,6 +182,7 @@ exports.updateCurrentAffair = async (req, res) => {
 exports.deleteCurrentAffair = async (req, res) => {
   try {
     const { id } = req.params;
+    
 
     const deleted = await CurrentAffair.findByIdAndDelete(id);
     if (!deleted) {
