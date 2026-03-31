@@ -241,15 +241,15 @@ exports.paymentCallback = async (req, res) => {
             }
 
             // ✅ UPDATE STUDENT PAYMENT STATUS
-            if (order.offlineStudent) {
-                await OfflineEvent.findByIdAndUpdate(
-                    order.offlineStudent,
-                    {
-                        paymentStatus: "paid",
-                        paymentReference: order.paymentReference
-                    }
-                );
-            }
+            // if (order.offlineStudent) {
+            //     await OfflineEvent.findByIdAndUpdate(
+            //         order.offlineStudent,
+            //         {
+            //             paymentStatus: "paid",
+            //             paymentReference: order.paymentReference
+            //         }
+            //     );
+            // }
 
             const userId = order.user;
 
