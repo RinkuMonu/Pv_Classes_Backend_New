@@ -4,13 +4,14 @@ const StudentResult = require("../Models/StudentResult");
 // ✅ Create
 exports.createResult = async (req, res) => {
     try {
-        const { name, category, examType, marks } = req.body;
+        const { name, category, examType, marks, message  } = req.body;
 
         const result = new StudentResult({
             name,
             category,
             examType,
             marks,
+            message,
         });
 
         await result.save();
@@ -27,15 +28,63 @@ exports.createResult = async (req, res) => {
 
 
 // ✅ Get All
+// exports.getAllResults = async (req, res) => {
+//     try {
+//         const results = await StudentResult.find().sort({ createdAt: -1 });
+
+//         res.status(200).json({
+//             success: true,
+//             count: results.length,
+//             data: results,
+//         });
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: error.message });
+//     }
+// };
+
+// ✅ Get All (with filter + search + pagination)
 exports.getAllResults = async (req, res) => {
     try {
-        const results = await StudentResult.find().sort({ createdAt: -1 });
+        const { page = 1, limit = 10, search = "", category, examType } = req.query;
+
+        // 🔍 Query build
+        let query = {};
+
+        // ✅ Search by name (case-insensitive)
+        if (search) {
+            query.name = { $regex: search, $options: "i" };
+        }
+
+        // ✅ Filter by category
+        if (category) {
+            query.category = category;
+        }
+
+        // ✅ Filter by examType
+        if (examType) {
+            query.examType = examType;
+        }
+
+        // 📄 Pagination
+        const skip = (page - 1) * limit;
+
+        const results = await StudentResult.find(query)
+            .sort({ createdAt: -1 })
+            .skip(Number(skip))
+            .limit(Number(limit));
+
+        // total count (for frontend pagination)
+        const total = await StudentResult.countDocuments(query);
 
         res.status(200).json({
             success: true,
             count: results.length,
+            total, // 🔥 total records
+            page: Number(page),
+            totalPages: Math.ceil(total / limit),
             data: results,
         });
+
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

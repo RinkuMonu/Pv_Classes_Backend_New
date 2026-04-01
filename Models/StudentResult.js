@@ -9,7 +9,7 @@ const studentResultSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      enum: ["OBC", "SC", "ST", "GENERAL"],
+      enum: ["OBC", "SC", "ST", "GENERAL","EWS"],
       required: true,
     },
     examType: {
@@ -22,6 +22,11 @@ const studentResultSchema = new mongoose.Schema(
       required: true,
       min: 0,
       max: 60,
+    },
+       message: {   // ✅ NEW FIELD
+      type: String,
+      trim: true,
+      maxlength: 500,
     },
   },
   { timestamps: true }

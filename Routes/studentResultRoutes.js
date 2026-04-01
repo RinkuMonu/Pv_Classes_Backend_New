@@ -11,14 +11,13 @@ const {
 } = require("../Controllers/studentResultController");
 
 
-// CRUD
 router.post("/", createResult);
 router.get("/", getAllResults);
 router.get("/:id", getSingleResult);
 router.put("/:id", updateResult);
 router.delete("/:id", deleteResult);
 
-// REPORT
+// REPORT GANRATE
 router.get("/report/summary", getReport);
 
 module.exports = router;
