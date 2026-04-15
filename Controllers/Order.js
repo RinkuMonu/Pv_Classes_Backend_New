@@ -259,11 +259,43 @@ exports.checkout = async (req, res) => {
         // 🔹 Calculate Total Amount
         let totalAmount = 0;
 
+        // ✅ Check if user already purchased anything
+        const existingPaidOrder = await Order.findOne({
+            user: userId,
+            paymentStatus: "paid"
+        });
+
+        // for (const item of courses) {
+        //     const course = await Course.findById(item.course);
+        //     if (!course) continue;
+
+        //     const price = course.price;
+        //     totalAmount += price * (item.quantity || 1);
+        // }
+
+        const TARGET_COURSE_ID = "69ddc741e2b7eba525362ace";
+
+        let discountApplied = false;
+
         for (const item of courses) {
             const course = await Course.findById(item.course);
             if (!course) continue;
 
-            const price = course.price;
+            let price = course.price;
+
+            // 🎯 Apply discount only if:
+            // 1. User returning hai
+            // 2. Course ID match karta hai
+            // 3. Discount already apply nahi hua
+            if (
+                existingPaidOrder &&
+                course._id.toString() === TARGET_COURSE_ID &&
+                !discountApplied
+            ) {
+                price = price / 2;
+                discountApplied = true;
+            }
+
             totalAmount += price * (item.quantity || 1);
         }
 
@@ -495,4 +527,20 @@ exports.changeOrderStatus = async (req, res) => {
         console.error("Error updating order status:", error);
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
+};
+
+// GET /order/is-returning
+exports.isReturningUser = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const hasOrder = await Order.exists({
+      user: userId,
+      paymentStatus: "paid"
+    });
+
+    res.json({ isReturning: !!hasOrder });
+  } catch (err) {
+    res.status(500).json({ isReturning: false });
+  }
 };

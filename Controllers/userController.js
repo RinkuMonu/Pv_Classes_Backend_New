@@ -128,7 +128,6 @@ exports.login = async (req, res) => {
   }
 };
 
-
 exports.sendOtp = async (req, res) => {
   try {
     const { phone } = req.body;
@@ -661,6 +660,8 @@ exports.sendWhatsAppNotification = async (req, res) => {
 
     console.log("Sending to:", phoneNumbers.length);
 
+    // const phoneNumbers = ["916367239473"];
+
     // ✅ batching
     const chunkArray = (array, size) => {
       const result = [];
@@ -732,4 +733,4 @@ exports.sendWhatsAppNotification = async (req, res) => {
       error: error.response?.data || error.message
     });
   }
-};
+};  

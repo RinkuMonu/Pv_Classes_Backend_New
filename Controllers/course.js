@@ -13,13 +13,19 @@ exports.createCourse = async (req, res) => {
       comboId, videos, faculty, faqs
     } = req.body;
 
+    
+
     let courseData = {
-      title, slug, exam, type, author, language,
-      mainMotive, price, discount_price,
+      title, slug, exam, type, language,
+      mainMotive, price, discountPrice: discount_price,
       isFree, validity, shortDescription,
       longDescription, status, faculty
     };
 
+    // ✅ Only add author if valid
+if (author) {
+  courseData.author = author;
+}
     if (topics) courseData.topics = Array.isArray(topics) ? topics : topics.split(",");
     if (features) courseData.features = Array.isArray(features) ? features : features.split(",");
 
@@ -158,30 +164,130 @@ exports.searchCourses = async (req, res) => {
   }
 };
 
+// exports.updateCourse = async (req, res) => {
+//   try {
+//     let courseData = req.body;
+//     if (req.files && req.files.length > 0) {
+//       courseData.images = req.files.map(file => file.filename);
+//     }
+//     if (courseData.topics) {
+//       courseData.topics = Array.isArray(courseData.topics) ? courseData.topics : courseData.topics.split(",");
+//     }
+//     if (courseData.features) {
+//       courseData.features = Array.isArray(courseData.features) ? courseData.features : courseData.features.split(",");
+//     }
+
+//     // ✅ Handle FAQs
+//     if (courseData.faqs) {
+//       courseData.faqs = Array.isArray(courseData.faqs) ? courseData.faqs : JSON.parse(courseData.faqs);
+//     }
+
+//     const course = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true });
+//     if (!course) return res.status(404).json({ message: "Course not found" });
+
+//     res.status(200).json({ message: "Course updated successfully", course });
+//   } catch (error) {
+//     res.status(400).json({ message: "Error updating course", error: error.message });
+//   }
+// };
+
 exports.updateCourse = async (req, res) => {
   try {
-    let courseData = req.body;
+    const {
+      title,
+      slug,
+      exam,
+      type,
+      author,
+      language,
+      mainMotive,
+      topics,
+      features,
+      price,
+      discount_price,
+      isFree,
+      validity,
+      shortDescription,
+      longDescription,
+      status,
+      comboId,
+      faculty,
+      faqs
+    } = req.body;
+
+    let courseData = {
+      title,
+      slug,
+      exam,
+      type,
+      language,
+      mainMotive,
+      price,
+      discountPrice: discount_price, // ✅ fix
+      isFree,
+      validity,
+      shortDescription,
+      longDescription,
+      status,
+      faculty
+    };
+
+    // ✅ author only if valid
+ if (author && author !== "undefined" && author !== "") {
+  courseData.author = author;
+}
+
+    // ✅ topics
+    if (topics) {
+      courseData.topics = Array.isArray(topics)
+        ? topics
+        : topics.split(",");
+    }
+
+    // ✅ features
+    if (features) {
+      courseData.features = Array.isArray(features)
+        ? features
+        : features.split(",");
+    }
+
+    // ✅ images
     if (req.files && req.files.length > 0) {
       courseData.images = req.files.map(file => file.filename);
     }
-    if (courseData.topics) {
-      courseData.topics = Array.isArray(courseData.topics) ? courseData.topics : courseData.topics.split(",");
-    }
-    if (courseData.features) {
-      courseData.features = Array.isArray(courseData.features) ? courseData.features : courseData.features.split(",");
-    }
 
-    // ✅ Handle FAQs
-    if (courseData.faqs) {
-      courseData.faqs = Array.isArray(courseData.faqs) ? courseData.faqs : JSON.parse(courseData.faqs);
+    // ✅ comboId
+    if (comboId) {
+      courseData.comboId = comboId;
     }
 
-    const course = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true });
-    if (!course) return res.status(404).json({ message: "Course not found" });
+    // ✅ FAQs
+    if (faqs) {
+      courseData.faqs = Array.isArray(faqs)
+        ? faqs
+        : JSON.parse(faqs);
+    }
 
-    res.status(200).json({ message: "Course updated successfully", course });
+    const course = await Course.findByIdAndUpdate(
+      req.params.id,
+      courseData,
+      { new: true }
+    );
+
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    res.status(200).json({
+      message: "Course updated successfully",
+      course
+    });
+
   } catch (error) {
-    res.status(400).json({ message: "Error updating course", error: error.message });
+    res.status(400).json({
+      message: "Error updating course",
+      error: error.message
+    });
   }
 };
 
