@@ -6,7 +6,8 @@ const {
     changeOrderStatus,
     checkout,
     getAllOrders,
-    getOrderById
+    getOrderById,
+    isReturningUser
 } = require("../Controllers/Order.js");
 
 const checkoutRouter = express.Router();
@@ -19,5 +20,6 @@ checkoutRouter.get("/get-all", getAllOrders);
 checkoutRouter.get("/:orderId", getOrderById);
 
 checkoutRouter.put("/:orderId/status", changeOrderStatus);
+checkoutRouter.get("/order/is-returning",authMiddleware, isReturningUser);
 
 module.exports = checkoutRouter;
