@@ -13,7 +13,8 @@ const {
 } = require("../Controllers/offlineInterviewController");
 const authMiddleware = require("../middleware/auth");
 
-router.post("/register",authMiddleware, registerStudent);
+// router.post("/register",authMiddleware, registerStudent);
+router.post("/register", registerStudent);
 
 router.get("/students", getStudents);
 
