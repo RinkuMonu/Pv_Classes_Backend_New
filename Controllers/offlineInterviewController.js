@@ -37,10 +37,7 @@ exports.getStudents = async (req, res) => {
 
     try {
 
-        const students = await OfflineEvent
-            .find()
-            .populate("exam")
-            .sort({ createdAt: -1 });
+        const students = await OfflineEvent .find({ type: "interview" }) .sort({ createdAt: -1 });
 
         res.json(students);
 
@@ -55,9 +52,7 @@ exports.getStudentById = async (req, res) => {
     try {
 
         const { id } = req.params;
-        const student = await OfflineEvent
-            .findById(id)
-            .populate("exam");
+        const student = await OfflineEvent.findOne({ _id: id, type: "interview" });
 
         if (!student) {
             return res.status(404).json({
@@ -93,11 +88,7 @@ exports.createGroups = async (req, res) => {
 
 
         // only same type students
-        const students = await OfflineEvent
-            .find({
-                groupNumber: null,
-            })
-            .sort({ createdAt: 1 });
+        const students = await OfflineEvent .find({ groupNumber: null, type: "interview" }) .sort({ createdAt: 1 });
 
         if (students.length === 0) {
             return res.json({
@@ -176,8 +167,6 @@ exports.scheduleEvent = async (req, res) => {
     }
 };
 
-
-
 exports.sendNotification = async (req, res) => {
 
     try {
@@ -245,3 +234,7 @@ exports.sendNotification = async (req, res) => {
     }
 
 };
+
+exports.createExam = async (req, res) => { try { const { name } = req.body; if (!name) { return res.status(400).json({ message: "Exam name is required" }); } const existingExam = await OfflineEvent.findOne({ exam: name }); if (existingExam) { return res.status(400).json({ message: "Exam already exists" }); } const exam = await OfflineEvent.create({ name: "Exam", mobile: Date.now().toString(), exam: name, interviewType: "TGT", type: "exam" }); res.status(201).json({ message: "Exam created successfully", data: { _id: exam._id, name: exam.exam } }); } catch (error) { res.status(500).json({ message: error.message }); } };
+
+exports.getExams = async (req, res) => { try { const exams = await OfflineEvent.distinct("exam", { type: "exam" }); res.json({ message: "Exams fetched successfully", data: exams }); } catch (error) { res.status(500).json({ message: error.message }); } };

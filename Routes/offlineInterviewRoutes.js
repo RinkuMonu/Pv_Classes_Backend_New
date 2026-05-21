@@ -9,6 +9,8 @@ const {
   scheduleEvent,
   sendNotification,
   getStudentById,
+  createExam,
+  getExams
   
 } = require("../Controllers/offlineInterviewController");
 const authMiddleware = require("../middleware/auth");
@@ -25,5 +27,9 @@ router.post("/create-groups", createGroups);
 router.post("/schedule", scheduleEvent);
 
 router.post("/send-notification", sendNotification);
+
+router.post("/exam/create", createExam); 
+
+router.get("/exams", getExams);
 
 module.exports = router;

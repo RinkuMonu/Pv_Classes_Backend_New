@@ -25,11 +25,7 @@ const OfflineInterviewSchema = new mongoose.Schema(
       required: true
     },
 
-    exam: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Exam",
-      required: true
-    },
+    exam: { type: String, required: true },
 
     type: {
       type: String,
