@@ -1,35 +1,35 @@
 
-const express = require("express");
-const router = express.Router();
+  const express = require("express");
+  const router = express.Router();
 
-const {
-  registerStudent,
-  getStudents,
-  createGroups,
-  scheduleEvent,
-  sendNotification,
-  getStudentById,
-  createExam,
-  getExams
-  
-} = require("../Controllers/offlineInterviewController");
-const authMiddleware = require("../middleware/auth");
+  const {
+    registerStudent,
+    getStudents,
+    createGroups,
+    scheduleEvent,
+    sendNotification,
+    getStudentById,
+    createExam,
+    getExams
+    
+  } = require("../Controllers/offlineInterviewController");
+  const authMiddleware = require("../middleware/auth");
 
-// router.post("/register",authMiddleware, registerStudent);
-router.post("/register", registerStudent);
+  // router.post("/register",authMiddleware, registerStudent);
+  router.post("/register", registerStudent);
 
-router.get("/students", getStudents);
+  router.get("/students", getStudents);
 
-router.get("/student/:id", getStudentById);
+  router.get("/student/:id", getStudentById);
 
-router.post("/create-groups", createGroups);
+  router.post("/create-groups", createGroups);
 
-router.post("/schedule", scheduleEvent);
+  router.post("/schedule", scheduleEvent);
 
-router.post("/send-notification", sendNotification);
+  router.post("/send-notification", sendNotification);
 
-router.post("/exam/create", createExam); 
+  router.post("/exam/create", createExam); 
 
-router.get("/exams", getExams);
+  router.get("/exams", getExams);
 
-module.exports = router;
+  module.exports = router;

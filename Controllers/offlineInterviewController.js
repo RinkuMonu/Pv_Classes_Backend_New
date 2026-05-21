@@ -237,4 +237,7 @@ exports.sendNotification = async (req, res) => {
 
 exports.createExam = async (req, res) => { try { const { name } = req.body; if (!name) { return res.status(400).json({ message: "Exam name is required" }); } const existingExam = await OfflineEvent.findOne({ exam: name }); if (existingExam) { return res.status(400).json({ message: "Exam already exists" }); } const exam = await OfflineEvent.create({ name: "Exam", mobile: Date.now().toString(), exam: name, interviewType: "TGT", type: "exam" }); res.status(201).json({ message: "Exam created successfully", data: { _id: exam._id, name: exam.exam } }); } catch (error) { res.status(500).json({ message: error.message }); } };
 
-exports.getExams = async (req, res) => { try { const exams = await OfflineEvent.distinct("exam", { type: "exam" }); res.json({ message: "Exams fetched successfully", data: exams }); } catch (error) { res.status(500).json({ message: error.message }); } };
+exports.getExams = async (req, res) => { try { const exams = await OfflineEvent.distinct("exam", { type: "exam" }); return res.status(200).json({
+  success: true,
+  data: exams
+}); } catch (error) { res.status(500).json({ message: error.message }); } };
