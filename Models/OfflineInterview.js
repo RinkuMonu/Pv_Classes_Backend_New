@@ -36,11 +36,7 @@ const OfflineInterviewSchema = new mongoose.Schema(
       type: String
     },
 
-    interviewType: {
-      type: String,
-      enum: ["TGT", "PRT"],
-      required: true
-    },
+    interviewType: { type: String, enum: ["TGT", "PRT", "DGT"], required: true },
 
     qualification: {
       type: String
