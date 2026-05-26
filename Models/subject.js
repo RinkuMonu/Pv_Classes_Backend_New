@@ -9,6 +9,7 @@ const VideoSchema = new mongoose.Schema({
   notes: [{ type: String }]
 }, { _id: false });
 
+
 const SubjectSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
