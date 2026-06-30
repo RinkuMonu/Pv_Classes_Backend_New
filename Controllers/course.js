@@ -7,20 +7,40 @@ const Subject = require("../Models/subject");
 exports.createCourse = async (req, res) => {
   try {
     const {
-      title, slug, exam, type, author, language, mainMotive, topics, features,
-      price, discount_price, isFree, validity,
-      shortDescription, longDescription, status,
-      comboId, videos, faculty, faqs
-    } = req.body;
+  title, slug, exam, type, author, language, mainMotive, topics, features,
+  price, discountPercent, isFree, validity,
+  shortDescription, longDescription, status,
+  comboId, videos, faculty, faqs
+} = req.body;
 
-    
+    const numericPrice = Number(price) || 0;
+const numericDiscountPercent = Number(discountPercent) || 0;
 
-    let courseData = {
-      title, slug, exam, type, language,
-      mainMotive, price, discountPrice: discount_price,
-      isFree, validity, shortDescription,
-      longDescription, status, faculty
-    };
+let finalDiscountPrice = 0;
+
+if (numericPrice > 0 && numericDiscountPercent > 0) {
+  finalDiscountPrice = Math.round(
+    numericPrice - (numericPrice * numericDiscountPercent) / 100
+  );
+}
+
+   let courseData = {
+  title,
+  slug,
+  exam,
+  type,
+  language,
+  mainMotive,
+  price: numericPrice,
+  discountPercent: numericDiscountPercent,
+  discountPrice: finalDiscountPrice,
+  isFree,
+  validity,
+  shortDescription,
+  longDescription,
+  status,
+  faculty
+};
 
     // ✅ Only add author if valid
 if (author) {
@@ -191,6 +211,118 @@ exports.searchCourses = async (req, res) => {
 //   }
 // };
 
+// exports.updateCourse = async (req, res) => {
+//   try {
+//     const {
+//   title,
+//   slug,
+//   exam,
+//   type,
+//   author,
+//   language,
+//   mainMotive,
+//   topics,
+//   features,
+//   price,
+// discountPercent,
+// isFree,
+//   validity,
+//   shortDescription,
+//   longDescription,
+//   status,
+//   comboId,
+//   faculty,
+//   faqs
+// } = req.body;
+
+// const numericPrice = Number(price) || 0;
+// const numericDiscountPercent = Number(discountPercent) || 0;
+
+// let finalDiscountPrice = 0;
+
+// if (numericPrice > 0 && numericDiscountPercent > 0) {
+//   finalDiscountPrice = Math.round(
+//     numericPrice - (numericPrice * numericDiscountPercent) / 100
+//   );
+// }
+
+// let courseData = {
+//   title,
+//   slug,
+//   exam,
+//   type,
+//   language,
+//   mainMotive,
+//   price,
+//   discountPercent: numericDiscountPercent,
+//   isFree,
+//   validity,
+//   shortDescription,
+//   longDescription,
+//   status,
+//   faculty
+// };
+
+//     // ✅ author only if valid
+//  if (author && author !== "undefined" && author !== "") {
+//   courseData.author = author;
+// }
+
+//     // ✅ topics
+//     if (topics) {
+//       courseData.topics = Array.isArray(topics)
+//         ? topics
+//         : topics.split(",");
+//     }
+
+//     // ✅ features
+//     if (features) {
+//       courseData.features = Array.isArray(features)
+//         ? features
+//         : features.split(",");
+//     }
+
+//     // ✅ images
+//     if (req.files && req.files.length > 0) {
+//       courseData.images = req.files.map(file => file.filename);
+//     }
+
+//     // ✅ comboId
+//     if (comboId) {
+//       courseData.comboId = comboId;
+//     }
+
+//     // ✅ FAQs
+//     if (faqs) {
+//       courseData.faqs = Array.isArray(faqs)
+//         ? faqs
+//         : JSON.parse(faqs);
+//     }
+
+//     const course = await Course.findByIdAndUpdate(
+//       req.params.id,
+//       courseData,
+//       { new: true }
+//     );
+
+//     if (!course) {
+//       return res.status(404).json({ message: "Course not found" });
+//     }
+
+//     res.status(200).json({
+//       message: "Course updated successfully",
+//       course
+//     });
+
+//   } catch (error) {
+//     res.status(400).json({
+//       message: "Error updating course",
+//       error: error.message
+//     });
+//   }
+// };
+
+
 exports.updateCourse = async (req, res) => {
   try {
     const {
@@ -204,7 +336,7 @@ exports.updateCourse = async (req, res) => {
       topics,
       features,
       price,
-      discount_price,
+      discountPercent,
       isFree,
       validity,
       shortDescription,
@@ -215,6 +347,17 @@ exports.updateCourse = async (req, res) => {
       faqs
     } = req.body;
 
+    const numericPrice = Number(price) || 0;
+    const numericDiscountPercent = Number(discountPercent) || 0;
+
+    let finalDiscountPrice = 0;
+
+    if (numericPrice > 0 && numericDiscountPercent > 0) {
+      finalDiscountPrice = Math.round(
+        numericPrice - (numericPrice * numericDiscountPercent) / 100
+      );
+    }
+
     let courseData = {
       title,
       slug,
@@ -222,8 +365,9 @@ exports.updateCourse = async (req, res) => {
       type,
       language,
       mainMotive,
-      price,
-      discountPrice: discount_price, // ✅ fix
+      price: numericPrice,
+      discountPercent: numericDiscountPercent,
+      discountPrice: finalDiscountPrice,
       isFree,
       validity,
       shortDescription,
@@ -232,47 +376,45 @@ exports.updateCourse = async (req, res) => {
       faculty
     };
 
-    // ✅ author only if valid
- if (author && author !== "undefined" && author !== "") {
-  courseData.author = author;
-}
+    // author only if valid
+    if (author && author !== "undefined" && author !== "") {
+      courseData.author = author;
+    }
 
-    // ✅ topics
+    // topics
     if (topics) {
       courseData.topics = Array.isArray(topics)
         ? topics
         : topics.split(",");
     }
 
-    // ✅ features
+    // features
     if (features) {
       courseData.features = Array.isArray(features)
         ? features
         : features.split(",");
     }
 
-    // ✅ images
+    // images
     if (req.files && req.files.length > 0) {
-      courseData.images = req.files.map(file => file.filename);
+      courseData.images = req.files.map((file) => file.filename);
     }
 
-    // ✅ comboId
+    // comboId
     if (comboId) {
       courseData.comboId = comboId;
     }
 
-    // ✅ FAQs
+    // FAQs
     if (faqs) {
       courseData.faqs = Array.isArray(faqs)
         ? faqs
         : JSON.parse(faqs);
     }
 
-    const course = await Course.findByIdAndUpdate(
-      req.params.id,
-      courseData,
-      { new: true }
-    );
+    const course = await Course.findByIdAndUpdate(req.params.id, courseData, {
+      new: true
+    });
 
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
@@ -282,7 +424,6 @@ exports.updateCourse = async (req, res) => {
       message: "Course updated successfully",
       course
     });
-
   } catch (error) {
     res.status(400).json({
       message: "Error updating course",
@@ -290,6 +431,7 @@ exports.updateCourse = async (req, res) => {
     });
   }
 };
+
 
 exports.deleteCourse = async (req, res) => {
   try {

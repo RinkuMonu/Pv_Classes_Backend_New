@@ -72,6 +72,11 @@ const OrderSchema = new mongoose.Schema({
         default: "processing"
     },
 
+    serialNumber: {
+  type: String,
+  unique: true
+},
+
     coupon: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Coupon"
