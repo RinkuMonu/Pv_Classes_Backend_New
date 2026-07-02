@@ -478,6 +478,27 @@ exports.getAllOrders = async (req, res) => {
     }
 };
 
+// exports.getOrderById = async (req, res) => {
+//     try {
+//         const { orderId } = req.params;
+
+//         const order = await Order.findById(orderId)
+//             .populate("user", "name email")
+//             .populate("courses.course", "title price thumbnail")
+//             .populate("books.book", "title price thumbnail")
+//             .populate("testSeries.test", "title price thumbnail");
+
+//         if (!order) {
+//             return res.status(404).json({ success: false, message: "Order not found" });
+//         }
+
+//         res.status(200).json({ success: true, order });
+//     } catch (error) {
+//         console.error("Error fetching order:", error);
+//         res.status(500).json({ success: false, message: "Internal Server Error" });
+//     }
+// };
+
 exports.getOrderById = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -486,16 +507,27 @@ exports.getOrderById = async (req, res) => {
             .populate("user", "name email")
             .populate("courses.course", "title price thumbnail")
             .populate("books.book", "title price thumbnail")
-            .populate("testSeries.test", "title price thumbnail");
+            .populate("testSeries.test", "title price thumbnail")
+            .populate("combo.combo", "title price thumbnail"); // combo bhi populate
 
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
         }
 
-        res.status(200).json({ success: true, order });
+        res.status(200).json({
+            success: true,
+            order
+        });
+
     } catch (error) {
         console.error("Error fetching order:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
     }
 };
 

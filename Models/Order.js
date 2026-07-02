@@ -80,6 +80,12 @@ const OrderSchema = new mongoose.Schema({
         type: Number,
         default: 0
     },
+
+serialNumber: {
+    type: String,
+    unique: true
+},
+
     createdAt: { type: Date, default: Date.now }
 });
 
