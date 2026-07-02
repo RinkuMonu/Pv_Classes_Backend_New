@@ -309,33 +309,165 @@ exports.updateUser = async (req, res) => {
 //   }
 // };
 
+// exports.getAllUserData = async (req, res) => {
+//   try {
+
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const search = req.query.search || "";
+
+
+//     const skip = (page - 1) * limit;
+
+//     let filter = {};
+
+//     // 🔎 Search by user name
+//     if (search) {
+//       filter.name = { $regex: search, $options: "i" }; // case-insensitive
+//     }
+
+//     const totalUsers = await User.countDocuments(filter);
+
+//     const users = await User.find(filter)
+//       .skip(skip)
+//       .limit(limit)
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       message: "Users fetched successfully",
+//       data: users,
+//       pagination: {
+//         totalUsers,
+//         currentPage: page,
+//         totalPages: Math.ceil(totalUsers / limit),
+//         limit
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error("Error fetching users:", error);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
+
 exports.getAllUserData = async (req, res) => {
   try {
-
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || "";
 
-
     const skip = (page - 1) * limit;
 
     let filter = {};
-
-    // 🔎 Search by user name
     if (search) {
-      filter.name = { $regex: search, $options: "i" }; // case-insensitive
+      filter.name = { $regex: search, $options: "i" };
     }
 
     const totalUsers = await User.countDocuments(filter);
 
     const users = await User.find(filter)
+      .populate("exam", "name")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const userIds = users.map((u) => u._id);
+
+    const orders = await Order.find({ user: { $in: userIds } })
+      .populate("courses.course", "title price thumbnail")
+      .populate("books.book", "title price thumbnail")
+      .populate("testSeries.test", "title price thumbnail")
+      .populate("combo.combo", "title price thumbnail")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const ordersByUser = {};
+    orders.forEach((order) => {
+      const userId = order.user.toString();
+      if (!ordersByUser[userId]) {
+        ordersByUser[userId] = [];
+      }
+      ordersByUser[userId].push(order);
+    });
+
+    const enrichedUsers = users.map((user) => {
+      const userOrders = ordersByUser[user._id.toString()] || [];
+
+      const purchasedCourses = [];
+      const purchasedBooks = [];
+      const purchasedTestSeries = [];
+      const purchasedCombos = [];
+
+      userOrders.forEach((order) => {
+        order.courses?.forEach((c) => {
+          if (c.course) {
+            purchasedCourses.push({
+              ...c.course,
+              orderId: order._id,
+              paymentStatus: order.paymentStatus,
+              orderStatus: order.orderStatus,
+              purchasedAt: order.createdAt,
+              serialNumber: order.serialNumber || null
+            });
+          }
+        });
+
+        order.books?.forEach((b) => {
+          if (b.book) {
+            purchasedBooks.push({
+              ...b.book,
+              orderId: order._id,
+              paymentStatus: order.paymentStatus,
+              orderStatus: order.orderStatus,
+              purchasedAt: order.createdAt,
+              serialNumber: order.serialNumber || null
+            });
+          }
+        });
+
+        order.testSeries?.forEach((t) => {
+          if (t.test) {
+            purchasedTestSeries.push({
+              ...t.test,
+              orderId: order._id,
+              paymentStatus: order.paymentStatus,
+              orderStatus: order.orderStatus,
+              purchasedAt: order.createdAt,
+              serialNumber: order.serialNumber || null
+            });
+          }
+        });
+
+        order.combo?.forEach((cb) => {
+          if (cb.combo) {
+            purchasedCombos.push({
+              ...cb.combo,
+              orderId: order._id,
+              paymentStatus: order.paymentStatus,
+              orderStatus: order.orderStatus,
+              purchasedAt: order.createdAt,
+              serialNumber: order.serialNumber || null
+            });
+          }
+        });
+      });
+
+      return {
+        ...user,
+        orders: userOrders,
+        purchases: {
+          courses: purchasedCourses,
+          books: purchasedBooks,
+          testSeries: purchasedTestSeries,
+          combo: purchasedCombos
+        }
+      };
+    });
 
     res.status(200).json({
       message: "Users fetched successfully",
-      data: users,
+      data: enrichedUsers,
       pagination: {
         totalUsers,
         currentPage: page,
@@ -343,13 +475,11 @@ exports.getAllUserData = async (req, res) => {
         limit
       }
     });
-
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 exports.updateUserStatus = async (req, res) => {
   try {
     const { userId } = req.body; // or req.params.userId if you want

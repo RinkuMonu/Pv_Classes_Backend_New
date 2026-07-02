@@ -18,6 +18,7 @@ const CourseSchema = new mongoose.Schema(
     type: { type: String, enum: ["Test Series", "Course"], required: true },
     price: { type: Number, default: 0 },
     faculty: [{ type: mongoose.Schema.Types.ObjectId, ref: "Faculty" }],
+    discountPercent: { type: Number, default: 0 },
     discountPrice: { type: Number, default: 0 },
     isFree: { type: Boolean, default: false },
     validity: { type: String },

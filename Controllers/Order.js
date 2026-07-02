@@ -361,6 +361,19 @@ exports.checkout = async (req, res) => {
 
         const finalAmount = totalAmount - discountAmount;
 
+        const lastOrder = await Order.findOne({
+            serialNumber: { $exists: true, $ne: null }
+        }).sort({ createdAt: -1 });
+
+        let nextSerial = 1;
+
+        if (lastOrder?.serialNumber) {
+            const lastNumber = parseInt(lastOrder.serialNumber.replace("PV", ""), 10);
+            nextSerial = lastNumber + 1;
+        }
+
+        const serialNumber = `PV${String(nextSerial).padStart(3, "0")}`;
+
         // Step 2: Create Order
         const order = new Order({
             user: userId,
@@ -374,7 +387,8 @@ exports.checkout = async (req, res) => {
             coupon: couponId || null,
             discountAmount,
             paymentStatus: "pending",
-            orderStatus: "processing"
+            orderStatus: "processing",
+            serialNumber
         });
 
         await order.save();
@@ -452,7 +466,7 @@ exports.getAllOrders = async (req, res) => {
         const totalOrders = await Order.countDocuments(filter);
 
         const orders = await Order.find(filter)
-            .populate("user", "name email")
+            .populate("user", "name email phone")
             .populate("courses.course", "title price thumbnail")
             .populate("books.book", "title price thumbnail")
             .populate("testSeries.test", "title price thumbnail")
@@ -504,7 +518,7 @@ exports.getOrderById = async (req, res) => {
         const { orderId } = req.params;
 
         const order = await Order.findById(orderId)
-            .populate("user", "name email")
+            .populate("user", "name email phone")
             .populate("courses.course", "title price thumbnail")
             .populate("books.book", "title price thumbnail")
             .populate("testSeries.test", "title price thumbnail")
@@ -545,7 +559,7 @@ exports.changeOrderStatus = async (req, res) => {
             { orderStatus: status },
             { new: true }
         )
-            .populate("user", "name email")
+            .populate("user", "name email phone")
             .populate("courses.course", "title price thumbnail")
             .populate("books.book", "title price thumbnail")
             .populate("testSeries.test", "title price thumbnail");
@@ -563,16 +577,16 @@ exports.changeOrderStatus = async (req, res) => {
 
 // GET /order/is-returning
 exports.isReturningUser = async (req, res) => {
-  try {
-    const userId = req.user.id;
+    try {
+        const userId = req.user.id;
 
-    const hasOrder = await Order.exists({
-      user: userId,
-      paymentStatus: "paid"
-    });
+        const hasOrder = await Order.exists({
+            user: userId,
+            paymentStatus: "paid"
+        });
 
-    res.json({ isReturning: !!hasOrder });
-  } catch (err) {
-    res.status(500).json({ isReturning: false });
-  }
+        res.json({ isReturning: !!hasOrder });
+    } catch (err) {
+        res.status(500).json({ isReturning: false });
+    }
 };
