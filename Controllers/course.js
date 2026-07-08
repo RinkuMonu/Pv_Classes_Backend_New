@@ -1,38 +1,6 @@
 const Course = require("../Models/Course");
 const Subject = require("../Models/subject");
 
-// ================= ANNIVERSARY OFFER =================
-const OFFER_START = new Date("2026-07-08T00:00:00");
-const OFFER_END = new Date("2026-07-10T23:59:59");
-
-// const SPECIAL_25_IDS = [
-//   "6a0e98352c5264b619774973",
-//   "6a0e990f2c5264b619774974",
-//   "6a11674559dbbe9825a2fe44",
-// ];
-
-// function getOfferDiscount(course) {
-//   const now = new Date();
-
-//   if (now >= OFFER_START && now <= OFFER_END) {
-//     if (SPECIAL_25_IDS.includes(course._id.toString())) {
-//       return 25;
-//     }
-
-//     return 20;
-//   }
-
-//   return Number(course.discountPercent || 0);
-// }
-
-// function getDiscountPrice(price, discountPercent) {
-//   const p = Number(price) || 0;
-//   const d = Number(discountPercent) || 0;
-
-//   if (d <= 0) return p;
-
-//   return Math.round(p - (p * d) / 100);
-// }
 
 
 // 📌 Create Course
@@ -48,9 +16,9 @@ exports.createCourse = async (req, res) => {
     const numericPrice = Number(price) || 0;
 const numericDiscountPercent = Number(discountPercent) || 0;
 
-let finalDiscountPrice = numericPrice;
+let finalDiscountPrice = 0;
 
-if (numericDiscountPercent > 0) {
+if (numericPrice > 0 && numericDiscountPercent > 0) {
   finalDiscountPrice = Math.round(
     numericPrice - (numericPrice * numericDiscountPercent) / 100
   );
@@ -111,9 +79,7 @@ if (author) {
 exports.getCourses = async (req, res) => {
   try {
     const { title, type, status, viewAll, exam } = req.query;
-
     let filter = {};
-
     if (title) filter.title = { $regex: title, $options: "i" };
     if (exam) filter.exam = exam;
     if (type) filter.type = type;
@@ -122,102 +88,7 @@ exports.getCourses = async (req, res) => {
     let query = Course.find(filter)
       .populate("exam")
       .populate("faculty")
-      .populate(
-        "author",
-        "name experience profile_image_url specialization"
-      )
-      .populate({
-        path: "comboId",
-        populate: [
-          { path: "books", model: "Book" },
-          { path: "testSeries", model: "TestSeries" },
-          { path: "pyqs", model: "PYQ" },
-        ],
-      });
-
-    if (viewAll !== "true") {
-      query = query.limit(50);
-    }
-
-    let courses = await query;
-
-    courses = await Promise.all(
-      courses.map(async (course) => {
-        const subjects = await Subject.find({
-          course: course._id,
-        });
-
-        // ================= OFFER =================
-
-        const discountPercent = getOfferDiscount(course);
-
-        const discountPrice = getDiscountPrice(
-          course.price || 0,
-          discountPercent
-        );
-
-        let finalPrice = discountPrice;
-
-        // Combo Price
-
-        if (course.comboId) {
-          if (course.comboId.books) {
-            course.comboId.books.forEach((b) => {
-              finalPrice +=
-                b.discount_price > 0
-                  ? b.discount_price
-                  : b.price;
-            });
-          }
-
-          if (course.comboId.testSeries) {
-            course.comboId.testSeries.forEach((ts) => {
-              finalPrice +=
-                ts.discount_price > 0
-                  ? ts.discount_price
-                  : ts.price;
-            });
-          }
-
-          if (course.comboId.pyqs) {
-            course.comboId.pyqs.forEach((pq) => {
-              finalPrice +=
-                pq.discount_price > 0
-                  ? pq.discount_price
-                  : pq.price;
-            });
-          }
-        }
-
-        return {
-          ...course.toObject(),
-          subjects,
-
-          discountPercent,
-          discountPrice,
-
-          finalPrice,
-        };
-      })
-    );
-
-    res.status(200).json(courses);
-  } catch (error) {
-    res.status(500).json({
-      error: error.message,
-    });
-  }
-};
-
-exports.getCourseById = async (req, res) => {
-  try {
-    const course = await Course.findById(req.params.id)
-      .populate("exam")
-      .populate("faculty")
-      .populate(
-        "author",
-        "name experience profile_image_url specialization"
-      )
+      .populate("author", "name experience profile_image_url specialization")
       .populate({
         path: "comboId",
         populate: [
@@ -227,76 +98,64 @@ exports.getCourseById = async (req, res) => {
         ]
       });
 
-    if (!course) {
-      return res.status(404).json({
-        message: "Course not found"
-      });
-    }
+    if (viewAll !== "true") query = query.limit(50);
 
-    // Subjects
-    const subjects = await Subject.find({
-      course: course._id
-    });
+    let courses = await query;
 
-    // ================= OFFER =================
+    // ✅ Fetch subjects for each course
+    courses = await Promise.all(
+      courses.map(async course => {
+        const subjects = await Subject.find({ course: course._id });
 
-    const discountPercent = getOfferDiscount(course);
+        // Final Price calculation
+        let finalPrice = course.price || 0;
+        if (course.comboId) {
+          if (course.comboId.books) course.comboId.books.forEach(b => finalPrice += b.discount_price > 0 ? b.discount_price : b.price);
+          if (course.comboId.testSeries) course.comboId.testSeries.forEach(ts => finalPrice += ts.discount_price > 0 ? ts.discount_price : ts.price);
+          if (course.comboId.pyqs) course.comboId.pyqs.forEach(pq => finalPrice += pq.discount_price > 0 ? pq.discount_price : pq.price);
+        }
 
-    const discountPrice = getDiscountPrice(
-      course.price || 0,
-      discountPercent
+        return { ...course.toObject(), subjects, finalPrice };
+      })
     );
 
-    let finalPrice = discountPrice;
+    res.status(200).json(courses);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-    // Combo Price
+exports.getCourseById = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id)
+      .populate("exam")
+      .populate("faculty")
+      .populate("author", "name experience profile_image_url specialization")
+      .populate({
+        path: "comboId",
+        populate: [
+          { path: "books", model: "Book" },
+          { path: "testSeries", model: "TestSeries" },
+          { path: "pyqs", model: "PYQ" }
+        ]
+      });
 
+    if (!course) return res.status(404).json({ message: "Course not found" });
+
+    // ✅ Fetch subjects linked to this course
+    const subjects = await Subject.find({ course: course._id });
+
+    // 👇 Final Price calculation (same as before)
+    let finalPrice = course.price || 0;
     if (course.comboId) {
-      if (course.comboId.books) {
-        course.comboId.books.forEach((b) => {
-          finalPrice +=
-            b.discount_price > 0
-              ? b.discount_price
-              : b.price;
-        });
-      }
-
-      if (course.comboId.testSeries) {
-        course.comboId.testSeries.forEach((ts) => {
-          finalPrice +=
-            ts.discount_price > 0
-              ? ts.discount_price
-              : ts.price;
-        });
-      }
-
-      if (course.comboId.pyqs) {
-        course.comboId.pyqs.forEach((pq) => {
-          finalPrice +=
-            pq.discount_price > 0
-              ? pq.discount_price
-              : pq.price;
-        });
-      }
+      if (course.comboId.books) course.comboId.books.forEach(b => finalPrice += b.discount_price > 0 ? b.discount_price : b.price);
+      if (course.comboId.testSeries) course.comboId.testSeries.forEach(ts => finalPrice += ts.discount_price > 0 ? ts.discount_price : ts.price);
+      if (course.comboId.pyqs) course.comboId.pyqs.forEach(pq => finalPrice += pq.discount_price > 0 ? pq.discount_price : pq.price);
     }
 
-    res.status(200).json({
-      ...course.toObject(),
-
-      subjects,
-
-      discountPercent,
-
-      discountPrice,
-
-      finalPrice
-    });
-
+    res.status(200).json({ ...course.toObject(), subjects, finalPrice });
   } catch (error) {
-    res.status(500).json({
-      message: "Error fetching course",
-      error: error.message
-    });
+    res.status(500).json({ message: "Error fetching course", error: error.message });
   }
 };
 
@@ -325,6 +184,145 @@ exports.searchCourses = async (req, res) => {
   }
 };
 
+// exports.updateCourse = async (req, res) => {
+//   try {
+//     let courseData = req.body;
+//     if (req.files && req.files.length > 0) {
+//       courseData.images = req.files.map(file => file.filename);
+//     }
+//     if (courseData.topics) {
+//       courseData.topics = Array.isArray(courseData.topics) ? courseData.topics : courseData.topics.split(",");
+//     }
+//     if (courseData.features) {
+//       courseData.features = Array.isArray(courseData.features) ? courseData.features : courseData.features.split(",");
+//     }
+
+//     // ✅ Handle FAQs
+//     if (courseData.faqs) {
+//       courseData.faqs = Array.isArray(courseData.faqs) ? courseData.faqs : JSON.parse(courseData.faqs);
+//     }
+
+//     const course = await Course.findByIdAndUpdate(req.params.id, courseData, { new: true });
+//     if (!course) return res.status(404).json({ message: "Course not found" });
+
+//     res.status(200).json({ message: "Course updated successfully", course });
+//   } catch (error) {
+//     res.status(400).json({ message: "Error updating course", error: error.message });
+//   }
+// };
+
+// exports.updateCourse = async (req, res) => {
+//   try {
+//     const {
+//   title,
+//   slug,
+//   exam,
+//   type,
+//   author,
+//   language,
+//   mainMotive,
+//   topics,
+//   features,
+//   price,
+// discountPercent,
+// isFree,
+//   validity,
+//   shortDescription,
+//   longDescription,
+//   status,
+//   comboId,
+//   faculty,
+//   faqs
+// } = req.body;
+
+// const numericPrice = Number(price) || 0;
+// const numericDiscountPercent = Number(discountPercent) || 0;
+
+// let finalDiscountPrice = 0;
+
+// if (numericPrice > 0 && numericDiscountPercent > 0) {
+//   finalDiscountPrice = Math.round(
+//     numericPrice - (numericPrice * numericDiscountPercent) / 100
+//   );
+// }
+
+// let courseData = {
+//   title,
+//   slug,
+//   exam,
+//   type,
+//   language,
+//   mainMotive,
+//   price,
+//   discountPercent: numericDiscountPercent,
+//   isFree,
+//   validity,
+//   shortDescription,
+//   longDescription,
+//   status,
+//   faculty
+// };
+
+//     // ✅ author only if valid
+//  if (author && author !== "undefined" && author !== "") {
+//   courseData.author = author;
+// }
+
+//     // ✅ topics
+//     if (topics) {
+//       courseData.topics = Array.isArray(topics)
+//         ? topics
+//         : topics.split(",");
+//     }
+
+//     // ✅ features
+//     if (features) {
+//       courseData.features = Array.isArray(features)
+//         ? features
+//         : features.split(",");
+//     }
+
+//     // ✅ images
+//     if (req.files && req.files.length > 0) {
+//       courseData.images = req.files.map(file => file.filename);
+//     }
+
+//     // ✅ comboId
+//     if (comboId) {
+//       courseData.comboId = comboId;
+//     }
+
+//     // ✅ FAQs
+//     if (faqs) {
+//       courseData.faqs = Array.isArray(faqs)
+//         ? faqs
+//         : JSON.parse(faqs);
+//     }
+
+//     const course = await Course.findByIdAndUpdate(
+//       req.params.id,
+//       courseData,
+//       { new: true }
+//     );
+
+//     if (!course) {
+//       return res.status(404).json({ message: "Course not found" });
+//     }
+
+//     res.status(200).json({
+//       message: "Course updated successfully",
+//       course
+//     });
+
+//   } catch (error) {
+//     res.status(400).json({
+//       message: "Error updating course",
+//       error: error.message
+//     });
+//   }
+// };
+
+
 exports.updateCourse = async (req, res) => {
   try {
     const {
@@ -352,13 +350,13 @@ exports.updateCourse = async (req, res) => {
     const numericPrice = Number(price) || 0;
     const numericDiscountPercent = Number(discountPercent) || 0;
 
-    let finalDiscountPrice = numericPrice;
+    let finalDiscountPrice = 0;
 
-if (numericDiscountPercent > 0) {
-  finalDiscountPrice = Math.round(
-    numericPrice - (numericPrice * numericDiscountPercent) / 100
-  );
-}
+    if (numericPrice > 0 && numericDiscountPercent > 0) {
+      finalDiscountPrice = Math.round(
+        numericPrice - (numericPrice * numericDiscountPercent) / 100
+      );
+    }
 
     let courseData = {
       title,
