@@ -15,9 +15,34 @@ const OrderSchema = new mongoose.Schema({
     ],
 
     // Books purchase
+    // Books purchase
     books: [
         {
-            book: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true }
+            book: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Book",
+                required: true
+            },
+
+            quantity: {
+                type: Number,
+                default: 1
+            },
+
+            deliveryType: {
+                type: String,
+                enum: ["pdf", "physical"],
+                default: "pdf"
+            },
+
+            shippingAddress: {
+                fullName: String,
+                mobile: String,
+                address: String,
+                city: String,
+                state: String,
+                pincode: String
+            }
         }
     ],
 
@@ -73,9 +98,9 @@ const OrderSchema = new mongoose.Schema({
     },
 
     serialNumber: {
-  type: String,
-  unique: true
-},
+        type: String,
+        unique: true
+    },
 
     coupon: {
         type: mongoose.Schema.Types.ObjectId,
@@ -86,10 +111,10 @@ const OrderSchema = new mongoose.Schema({
         default: 0
     },
 
-serialNumber: {
-    type: String,
-    unique: true
-},
+    serialNumber: {
+        type: String,
+        unique: true
+    },
 
     createdAt: { type: Date, default: Date.now }
 });

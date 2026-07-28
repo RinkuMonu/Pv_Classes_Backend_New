@@ -9,212 +9,6 @@ const Coupon = require("../Models/coupon");
 
 
 
-// exports.checkout = async (req, res) => {
-
-//     try {
-//         const userId = req.user.id;
-//         // Step 1: Transform cart by itemType 
-//         const grouped = { courses: [], books: [], testSeries: [], combo: [] };
-//         req.body.cart.forEach(item => {
-//             if (item.itemType === "course") {
-//                 grouped.courses.push({ course: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "book") {
-//                 grouped.books.push({ book: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "testSeries") {
-//                 grouped.testSeries.push({ test: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "combo") {
-//                 grouped.combo.push({ combo: item.itemId, quantity: item.quantity });
-//             }
-//         });
-
-//         const { courses, books, testSeries, combo } = grouped;
-//         const { paymentMethod, totalAmount, couponId, discountAmount, shippingAddress } = req.body;
-
-
-//         if ((!courses.length && !books.length && !testSeries.length && !combo.length) || !paymentMethod || !totalAmount) {
-//             return res.status(400).json({ message: "At least one item and all fields are required!" });
-//         }
-
-
-//         if (books.length > 0) {
-//             const { name, phone, address, city, state, pincode } = shippingAddress || {};
-
-//             if (!name || !phone || !address || !city || !state || !pincode) {
-//                 return res.status(400).json({
-//                     message: "Complete shipping address is required for books"
-//                 });
-//             }
-//         }
-
-//         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
-//             return res.status(400).json({ message: "Invalid payment method" });
-//         }
-
-
-
-
-//         // Step 2: Create Order
-//         const order = new Order({
-//             user: userId,
-//             courses,
-//             books,
-//             testSeries,
-//             combo,
-//             shippingAddress,
-//             totalAmount: totalAmount,
-//             paymentMethod,
-//             coupon: couponId || null,
-//             discountAmount: discountAmount || 0,
-//             paymentStatus: "pending",
-//             orderStatus: "processing"
-//         });
-//         await order.save();
-
-//         res.status(201).json({
-//             message: "Order created successfully. Proceed to payment.",
-//             order
-//         });
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-
-
-// exports.getAllOrders = async (req, res) => {
-//     try {
-//         const { userId, status } = req.query;
-
-//         const filter = {};
-//         if (userId) filter.user = userId;
-//         if (status) filter.orderStatus = status;
-
-//         const orders = await Order.find(filter)
-//             .populate("user", "name email")
-//             .populate("courses.course", "title price thumbnail")
-//             .populate("books.book", "title price thumbnail")
-//             .populate("testSeries.test", "title price thumbnail");
-
-//         res.status(200).json({ success: true, orders });
-//     } catch (error) {
-//         console.error("Error fetching orders:", error);
-//         res.status(500).json({ success: false, message: "Internal Server Error" });
-//     }
-// };
-
-
-//===============
-
-
-// exports.checkout = async (req, res) => {
-
-//     try {
-//         const userId = req.user.id;
-
-//         // Step 1: Transform cart by itemType 
-//         const grouped = { courses: [], books: [], testSeries: [], combo: [] };
-//         req.body.cart.forEach(item => {
-//             if (item.itemType === "course") {
-//                 grouped.courses.push({ course: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "book") {
-//                 grouped.books.push({ book: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "testSeries") {
-//                 grouped.testSeries.push({ test: item.itemId, quantity: item.quantity });
-//             } else if (item.itemType === "combo") {
-//                 grouped.combo.push({ combo: item.itemId, quantity: item.quantity });
-//             }
-//         });
-
-//         const { courses, books, testSeries, combo } = grouped;
-//         const { paymentMethod, couponId, discountAmount, shippingAddress } = req.body;
-
-//         if ((!courses.length && !books.length && !testSeries.length && !combo.length) || !paymentMethod) {
-//             return res.status(400).json({ message: "At least one item and all fields are required!" });
-//         }
-
-//         if (books.length > 0) {
-//             const { name, phone, address, city, state, pincode } = shippingAddress || {};
-
-//             if (!name || !phone || !address || !city || !state || !pincode) {
-//                 return res.status(400).json({
-//                     message: "Complete shipping address is required for books"
-//                 });
-//             }
-//         }
-
-//         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
-//             return res.status(400).json({ message: "Invalid payment method" });
-//         }
-
-//         // 🔹 Calculate Total Amount from DB
-//         let totalAmount = 0;
-
-//         // Courses price
-//         for (const item of courses) {
-//             const course = await Course.findById(item.course);
-//             if (!course) continue;
-
-//             const price = course.discountPrice > 0 ? course.discountPrice : course.price;
-//             totalAmount += price * (item.quantity || 1);
-//         }
-
-//         // Test Series price
-//         for (const item of testSeries) {
-//             const test = await Course.findById(item.test);
-//             if (!test) continue;
-
-//             const price = test.discountPrice > 0 ? test.discountPrice : test.price;
-//             totalAmount += price * (item.quantity || 1);
-//         }
-
-//         // Combo price
-//         for (const item of combo) {
-//             const comboItem = await Combo.findById(item.combo);
-//             if (!comboItem) continue;
-
-//             const price = comboItem.discountPrice > 0 ? comboItem.discountPrice : comboItem.price;
-//             totalAmount += price * (item.quantity || 1);
-//         }
-
-//         // Books price
-//         for (const item of books) {
-//             const book = await Book.findById(item.book);
-//             if (!book) continue;
-
-//             const price = book.discountPrice > 0 ? book.discountPrice : book.price;
-//             totalAmount += price * (item.quantity || 1);
-//         }
-
-//         // Step 2: Create Order
-//         const order = new Order({
-//             user: userId,
-//             courses,
-//             books,
-//             testSeries,
-//             combo,
-//             shippingAddress,
-//             totalAmount: totalAmount,
-//             paymentMethod,
-//             coupon: couponId || null,
-//             discountAmount: discountAmount || 0,
-//             paymentStatus: "pending",
-//             orderStatus: "processing"
-//         });
-
-//         await order.save();
-
-//         res.status(201).json({
-//             message: "Order created successfully. Proceed to payment.",
-//             order
-//         });
-
-//     } catch (error) {
-//         console.log(error);
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-
-
 exports.checkout = async (req, res) => {
 
     try {
@@ -226,7 +20,12 @@ exports.checkout = async (req, res) => {
             if (item.itemType === "course") {
                 grouped.courses.push({ course: item.itemId, quantity: item.quantity });
             } else if (item.itemType === "book") {
-                grouped.books.push({ book: item.itemId, quantity: item.quantity });
+                grouped.books.push({
+                    book: item.itemId,
+                    quantity: item.quantity,
+                    deliveryType: item.deliveryType || "pdf",
+                    shippingAddress: item.shippingAddress || {}
+                });
             } else if (item.itemType === "testSeries") {
                 grouped.testSeries.push({ test: item.itemId, quantity: item.quantity });
             } else if (item.itemType === "combo") {
@@ -251,7 +50,32 @@ exports.checkout = async (req, res) => {
         //         });
         //     }
         // }
+for (const book of books) {
+    if (book.deliveryType === "physical") {
+        const {
+            fullName,
+            mobile,
+            address,
+            city,
+            state,
+            pincode,
+        } = book.shippingAddress || {};
 
+        if (
+            !fullName ||
+            !mobile ||
+            !address ||
+            !city ||
+            !state ||
+            !pincode
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Complete shipping address is required for physical books"
+            });
+        }
+    }
+}
         if (!["card", "upi", "netbanking"].includes(paymentMethod)) {
             return res.status(400).json({ message: "Invalid payment method" });
         }
