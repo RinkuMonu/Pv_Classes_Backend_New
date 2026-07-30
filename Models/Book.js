@@ -68,6 +68,12 @@ const bookSchema = new mongoose.Schema(
       required: true
     },
 
+    sale_type: {
+  type: String,
+  enum: ["both", "pdf", "physical"],
+  default: "both", // purani books automatically both hongi
+},
+
     // ✅ Key Features as array of objects
     book_key_features: [
       {

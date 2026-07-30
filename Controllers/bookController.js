@@ -15,6 +15,7 @@ exports.createBook = async (req, res) => {
       stock,
       book_key_features,
       language,
+      sale_type, 
       is_free
     } = req.body;
 
@@ -56,6 +57,7 @@ exports.createBook = async (req, res) => {
       images,
       free_pdf,
       paid_pdf,
+      sale_type: sale_type || "both",
       is_free: is_free !== undefined
         ? String(is_free).trim().toLowerCase() === "true"
         : false,
@@ -173,6 +175,7 @@ exports.getAllBooks = async (req, res) => {
       acc[subCatId].books.push({
         _id: book._id,
         is_free: book.is_free,
+        sale_type: book.sale_type,
         category: {
           _id: book.book_category_id?._id,
           name: book.book_category_id?.name,
@@ -252,6 +255,7 @@ exports.updateBook = async (req, res) => {
       stock,
       book_key_features,
       language,
+      sale_type,
       is_free,
     } = req.body;
 
@@ -266,6 +270,7 @@ exports.updateBook = async (req, res) => {
       discount_price,
       stock,
       language,
+      sale_type,
       book_key_features: book_key_features
         ? JSON.parse(book_key_features)
         : [],
