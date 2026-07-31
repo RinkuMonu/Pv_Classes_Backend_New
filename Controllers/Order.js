@@ -342,7 +342,10 @@ exports.getOrderById = async (req, res) => {
         const { orderId } = req.params;
 
         const order = await Order.findById(orderId)
-            .populate("user", "name email phone")
+            .populate(
+  "user",
+  "name fatherName motherName email phone address city state pincode"
+)
             .populate("courses.course", "title price thumbnail")
             .populate("books.book", "title price thumbnail")
             .populate("testSeries.test", "title price thumbnail")

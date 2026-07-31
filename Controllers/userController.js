@@ -24,9 +24,28 @@ const generateToken = (user, sessionId) => {
 
 exports.register = async (req, res) => {
   try {
-    const { name, phone, password, role, state, district, exam } = req.body;
+    const {
+  name,
+  fatherName,
+  motherName,
+  email,
+  phone,
+  password,
+  role,
+  state,
+  district,
+  exam,
+} = req.body;
 
-    if (!name || !phone || !password || !exam) {
+   if (
+  !name ||
+  !fatherName ||
+  !motherName ||
+  !email ||
+  !phone ||
+  !password ||
+  !exam
+) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -39,14 +58,17 @@ exports.register = async (req, res) => {
 
     // Role agar body me diya hai to set ho jaayega, otherwise default "user" hi hoga
     const user = new User({
-      name,
-      phone,
-      password: hashedPassword,
-      role: role || "user",
-      state,
-      district,
-      exam
-    });
+  name,
+  fatherName,
+  motherName,
+  email,
+  phone,
+  password: hashedPassword,
+  role: role || "user",
+  state,
+  district,
+  exam
+});
 
     await user.save();
 
