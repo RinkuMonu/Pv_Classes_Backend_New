@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    email: { type: String, trim: true },
+    email: {type: String, trim: true, unique: true, sparse: true,},
     phone: { type: String, required: true, trim: true, unique: true },
     password: { type: String },
     exam: {
@@ -45,10 +45,10 @@ const UserSchema = new mongoose.Schema(
     district: { type: String },
     profile_image: { type: String, default: null },
     role: {
-      type: String,
-      enum: ["user", "teacher", "admin"],
-      default: "y"
-    },
+  type: String,
+  enum: ["user", "teacher", "admin"],
+  default: "user",
+},
     experience: { type: String },
     specialization: { type: String },
     sessionId: { type: String, default: null } // ✅ add this

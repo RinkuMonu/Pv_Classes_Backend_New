@@ -24,6 +24,8 @@ const generateToken = (user, sessionId) => {
 
 exports.register = async (req, res) => {
   try {
+        console.log("REQ BODY:", req.body);
+
     const {
   name,
   fatherName,
@@ -49,10 +51,23 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({ phone });
-    if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    // Phone already registered
+const existingPhone = await User.findOne({ phone });
+
+if (existingPhone) {
+  return res.status(400).json({
+    message: "Phone number already registered",
+  });
+}
+
+// Email already registered
+const existingEmail = await User.findOne({ email });
+
+if (existingEmail) {
+  return res.status(400).json({
+    message: "Email already registered",
+  });
+}
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -73,15 +88,18 @@ exports.register = async (req, res) => {
     await user.save();
 
     res.status(201).json({
-      message: "User registered successfully",
-      token: generateToken(user),
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        role: user.role, // 👈 role send kiya
-      },
-    });
+  message: "User registered successfully",
+  token: generateToken(user),
+  user: {
+    id: user._id,
+    name: user.name,
+    fatherName: user.fatherName,
+    motherName: user.motherName,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+  },
+});
   } catch (error) {
     res.status(500).json({ message: "Registration failed", error: error.message });
   }

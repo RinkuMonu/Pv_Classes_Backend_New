@@ -342,15 +342,17 @@ exports.getOrderById = async (req, res) => {
         const { orderId } = req.params;
 
         const order = await Order.findById(orderId)
-            .populate(
-  "user",
-  "name fatherName motherName email phone address city state pincode"
-)
-            .populate("courses.course", "title price thumbnail")
-            .populate("books.book", "title price thumbnail")
-            .populate("testSeries.test", "title price thumbnail")
-            .populate("combo.combo", "title price thumbnail"); // combo bhi populate
+  .populate(
+    "user",
+    "name fatherName motherName email phone address city state pincode"
+  )
+  .populate("courses.course", "title price thumbnail")
+  .populate("books.book", "title price thumbnail")
+  .populate("testSeries.test", "title price thumbnail")
+  .populate("combo.combo", "title price thumbnail");
 
+console.log("===== USER =====");
+console.log(order.user);
         if (!order) {
             return res.status(404).json({
                 success: false,
