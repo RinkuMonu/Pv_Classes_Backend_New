@@ -33,10 +33,10 @@ exports.initiatePayin = async (req, res) => {
         // 3️⃣ Prepare Payload
         const payload = {
             amount: order.totalAmount,
-            category: "69098858833bc4bd990d6e22", // fixed
-            email: "pmladlikabas@gmail.com",    // fixed
+            category: "69098858833bc4bd990d6e22",
+            email: "pmladlikabas@gmail.com",
             reference: reference,
-            userId: "6970f793e59ebf5abae7769e"     // fixed
+            userId: order.user.toString()
         };
 
         // 4️⃣ Call PayIn API
