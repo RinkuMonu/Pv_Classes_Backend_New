@@ -13,12 +13,71 @@ const generateReference = () => {
     return "RAJ" + Date.now() + Math.floor(Math.random() * 1000);
 };
 
+// exports.initiatePayin = async (req, res) => {
+//     try {
+//         const { orderId } = req.body;
+
+//         // 1️⃣ Get Order
+//         const order = await Order.findById(orderId);
+//         if (!order) {
+//             return res.status(404).json({ message: "Order not found" });
+//         }
+
+//         if (order.paymentStatus === "paid") {
+//             return res.status(400).json({ message: "Order already paid" });
+//         }
+
+//         // 2️⃣ Generate Reference
+//         const reference = generateReference();
+
+//         // 3️⃣ Prepare Payload
+//         const payload = {
+//             amount: order.totalAmount,
+//             category: "69098858833bc4bd990d6e22", // fixed
+//             email: "pmladlikabas@gmail.com",    // fixed
+//             reference: reference,
+//             userId: "6970f793e59ebf5abae7769e"     // fixed
+//         };
+
+//         // 4️⃣ Call PayIn API
+//         const response = await axios.post(
+//             "https://server.finuniques.in/api/v1/payment/payin",
+//             payload,
+//             {
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                     Authorization: `Bearer ${process.env.PAYIN_TOKEN}`
+//                 }
+//             }
+//         );
+
+//         // 5️⃣ Save reference in Order
+//         order.paymentReference = reference;
+//         await order.save();
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "PayIn initiated successfully",
+//             paymentData: response.data
+//         });
+
+//     } catch (error) {
+//         console.log("PayIn Error:", error.response?.data || error.message);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Payment initiation failed",
+//             error: error.response?.data || error.message
+//         });
+//     }
+// };
+
 exports.initiatePayin = async (req, res) => {
     try {
         const { orderId } = req.body;
 
-        // 1️⃣ Get Order
-        const order = await Order.findById(orderId);
+        // 1️⃣ Get Order + User
+        const order = await Order.findById(orderId).populate("user");
+
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
         }
@@ -27,19 +86,25 @@ exports.initiatePayin = async (req, res) => {
             return res.status(400).json({ message: "Order already paid" });
         }
 
+        if (!order.user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         // 2️⃣ Generate Reference
         const reference = generateReference();
 
         // 3️⃣ Prepare Payload
         const payload = {
             amount: order.totalAmount,
-            category: "69098858833bc4bd990d6e22",
-            email: "pmladlikabas@gmail.com",
+            email: order.user.email,
             reference: reference,
-            userId: order.user.toString()
+            name: order.user.name,
+            mobile: order.user.phone,
+            category: "69098858833bc4bd990d6e22"
         };
 
-        
+        console.log("PAYIN PAYLOAD:", payload);
+
         // 4️⃣ Call PayIn API
         const response = await axios.post(
             "https://server.finuniques.in/api/v1/payment/payin",
@@ -63,7 +128,11 @@ exports.initiatePayin = async (req, res) => {
         });
 
     } catch (error) {
-        console.log("PayIn Error:", error.response?.data || error.message);
+        console.log(
+            "PayIn Error:",
+            error.response?.data || error.message
+        );
+
         return res.status(500).json({
             success: false,
             message: "Payment initiation failed",
@@ -71,122 +140,6 @@ exports.initiatePayin = async (req, res) => {
         });
     }
 };
-
-
-// exports.paymentCallback = async (req, res) => {
-//     try {
-//         console.log("Callback Body:", req.body);
-
-//         const {
-//             orderId,          // RAJ reference
-//             responseCode,     // 100 = success
-//             pgTransId,        // transaction id
-//         } = req.body;
-
-//         if (!orderId) {
-//             return res.status(400).json({ message: "Invalid callback data" });
-//         }
-
-//         // 🔹 Find Order by paymentReference
-//         const order = await Order.findOne({ paymentReference: orderId });
-//         if (!order) {
-//             return res.status(404).json({ message: "Order not found" });
-//         }
-
-//         // 🔹 Prevent duplicate processing
-//         if (order.paymentStatus === "paid") {
-//             return res.status(200).json({ message: "Already processed" });
-//         }
-
-//         // ✅ SUCCESS CASE
-//         if (responseCode === "100") {
-
-//             order.paymentStatus = "paid";
-//             order.orderStatus = "completed";
-//             order.transactionId = pgTransId;
-
-//             await order.save();
-
-//             const userId = order.user;
-
-//             // 🔹 Grant Course Access
-//             for (const c of order.courses) {
-//                 const course = await Course.findById(c.course).populate("comboId");
-//                 if (!course) continue;
-
-//                 const validTill = course.validity
-//                     ? new Date(Date.now() + parseInt(course.validity) * 24 * 60 * 60 * 1000)
-//                     : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-
-//                 const existingAccess = await Access.findOne({
-//                     user: userId,
-//                     course: course._id
-//                 });
-
-//                 if (!existingAccess) {
-//                     await Access.create({
-//                         user: userId,
-//                         course: course._id,
-//                         validTill
-//                     });
-//                 }
-
-//                 // 🔹 Combo Access
-//                 if (course.comboId) {
-//                     const combo = course.comboId;
-
-//                     for (const bookId of combo.books || []) {
-//                         const exist = await Access.findOne({
-//                             user: userId,
-//                             book: bookId
-//                         });
-//                         if (!exist) {
-//                             await Access.create({
-//                                 user: userId,
-//                                 book: bookId,
-//                                 validTill
-//                             });
-//                         }
-//                     }
-
-//                     for (const testId of combo.testSeries || []) {
-//                         const exist = await Access.findOne({
-//                             user: userId,
-//                             testSeries: testId
-//                         });
-//                         if (!exist) {
-//                             await Access.create({
-//                                 user: userId,
-//                                 testSeries: testId,
-//                                 validTill
-//                             });
-//                         }
-//                     }
-//                 }
-//             }
-
-//             return res.status(200).json({
-//                 message: "Payment successful & access granted"
-//             });
-
-//         } else {
-//             // ❌ FAILED CASE
-//             order.paymentStatus = "failed";
-//             order.orderStatus = "cancelled";
-//             await order.save();
-
-//             return res.status(200).json({
-//                 message: "Payment failed"
-//             });
-//         }
-
-//     } catch (error) {
-//         console.error("Callback Error:", error);
-//         return res.status(500).json({
-//             message: "Callback processing failed"
-//         });
-//     }
-// };
 
 
 exports.paymentCallback = async (req, res) => {
