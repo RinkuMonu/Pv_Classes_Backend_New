@@ -1,14 +1,15 @@
 const express = require("express");
-const finuniqueAuth = require("../middleware/finuniqueAuth");
+
+const authMiddleware = require("../middleware/auth");
 
 const {
-    initiatePayin,
-    paymentCallback
+  initiatePayin,
+  paymentCallback
 } = require("../Controllers/Payment");
 
 const router = express.Router();
 
-router.post("/payin", finuniqueAuth, initiatePayin);
+router.post("/payin", authMiddleware, initiatePayin);
 
 router.post("/payin/callback", paymentCallback);
 

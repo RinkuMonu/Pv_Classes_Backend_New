@@ -72,6 +72,7 @@ const generateReference = () => {
 // };
 
 exports.initiatePayin = async (req, res) => {
+    console.log("🔥 PAYIN CONTROLLER HIT");
     try {
 
                 console.log(
@@ -152,13 +153,18 @@ exports.initiatePayin = async (req, res) => {
 
 exports.paymentCallback = async (req, res) => {
     try {
-        console.log("Callback Body:", req.body);
+        console.log("🔥 PAYMENT CALLBACK HIT");
+        console.log("CALLBACK BODY:", req.body);
 
         const {
-            orderId,
-            responseCode,
-            pgTransId,
-        } = req.body;
+    orderId,
+    responseCode,
+    pgTransId,
+    transactionId,
+    paymentMode,
+    amount,
+    responseDescription
+} = req.body;
 
         if (!orderId) {
             return res.status(400).json({ message: "Invalid callback data" });
@@ -174,15 +180,9 @@ exports.paymentCallback = async (req, res) => {
         }
 
         // ✅ SUCCESS CASE
-        if (responseCode === "100") {
-
-            // order.paymentStatus = "paid";
-            // order.orderStatus = "completed";
-            // order.transactionId = pgTransId;
-            // await order.save();
-
-            order.paymentStatus = "paid";
-            order.transactionId = pgTransId;
+       if (String(responseCode) === "100") {
+    order.paymentStatus = "paid";
+    order.transactionId = pgTransId || transactionId || null;
 
             if (order.books && order.books.length > 0) {
                 order.orderStatus = "confirmed"; // 📦 book order
@@ -218,7 +218,7 @@ exports.paymentCallback = async (req, res) => {
             // =========================
             // 1️⃣ COURSE ACCESS
             // =========================
-            for (const c of order.courses) {
+            for (const c of order.courses || []) {
                 const course = await Course.findById(c.course).populate("comboId");
                 if (!course) continue;
 
@@ -254,7 +254,7 @@ exports.paymentCallback = async (req, res) => {
             // =========================
             // 2️⃣ STANDALONE BOOKS 
             // =========================
-            for (const b of order.books) {
+           for (const b of order.books || []) {
                 const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
                 const exist = await Access.findOne({ user: userId, book: b.book });
@@ -266,7 +266,7 @@ exports.paymentCallback = async (req, res) => {
             // =========================
             // 3️⃣ STANDALONE TEST SERIES
             // =========================
-            for (const t of order.testSeries) {
+            for (const t of order.testSeries || []) {
                 const validTill = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
                 const exist = await Access.findOne({ user: userId, testSeries: t.test });
@@ -278,7 +278,7 @@ exports.paymentCallback = async (req, res) => {
             // =========================
             // 4️⃣ DIRECT COMBO PURCHASE
             // =========================
-            for (const c of order.combo) {
+           for (const c of order.combo || []) {
                 const combo = await Combo.findById(c.combo);
                 if (!combo) continue;
 
@@ -317,20 +317,48 @@ exports.paymentCallback = async (req, res) => {
             }
 
 
-            return res.status(200).json({
-                message: "Payment successful & all access granted"
-            });
+           return res.status(200).send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Payment Successful</title>
+        <meta http-equiv="refresh" content="3;url=https://pvclasses.in/">
+    </head>
+    <body>
+        <div style="text-align:center; margin-top:100px; font-family:Arial;">
+            <h2>Payment Successful ✅</h2>
+            <p>Your payment has been completed successfully.</p>
+            <p>You will be redirected to PV Classes shortly...</p>
+        </div>
+    </body>
+    </html>
+`);
 
         } else {
-            order.paymentStatus = "failed";
-            order.orderStatus = "cancelled";
-            order.transactionId = pgTransId;
+    order.paymentStatus = "failed";
+    order.orderStatus = "cancelled";
+    order.transactionId = pgTransId || transactionId || null;
 
-            await order.save();
+    await order.save();
 
-            return res.status(200).json({
-                message: "Payment failed"
-            });
+            return res.status(200).send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Payment Failed</title>
+        <meta http-equiv="refresh" content="3;url=https://pvclasses.in/">
+    </head>
+    <body>
+        <div style="text-align:center; margin-top:100px; font-family:Arial;">
+            <h2>Payment Failed ❌</h2>
+            <p>Your payment could not be completed.</p>
+            <p>You will be redirected to PV Classes shortly...</p>
+        </div>
+    </body>
+    </html>
+`);
         }
 
     } catch (error) {
