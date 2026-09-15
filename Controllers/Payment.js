@@ -73,6 +73,14 @@ const generateReference = () => {
 
 exports.initiatePayin = async (req, res) => {
     try {
+
+                console.log(
+            "PAYIN TOKEN:",
+            process.env.PAYIN_TOKEN
+                ? `${process.env.PAYIN_TOKEN.slice(0, 10)}...${process.env.PAYIN_TOKEN.slice(-10)}`
+                : "MISSING"
+        );
+
         const { orderId } = req.body;
 
         // 1️⃣ Get Order + User
