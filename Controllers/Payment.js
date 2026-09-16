@@ -85,7 +85,15 @@ exports.initiatePayin = async (req, res) => {
         const { orderId } = req.body;
 
         // 1️⃣ Get Order + User
-        const order = await Order.findById(orderId).populate("user");
+        let order;
+        if (/^[0-9a-fA-F]{24}$/.test(orderId)) {
+            order = await Order.findById(orderId).populate("user");
+        } else {
+            order = await Order.findOne({ paymentReference: orderId }).populate("user");
+            if (!order) {
+                order = await Order.findOne({ serialNumber: orderId }).populate("user");
+            }
+        }
 
         if (!order) {
             return res.status(404).json({ message: "Order not found" });
@@ -105,10 +113,10 @@ exports.initiatePayin = async (req, res) => {
         // 3️⃣ Prepare Payload
         const payload = {
             amount: order.totalAmount,
-            email: order.user.email,
+            email: order.user.email || "student@pvclasses.in",
             reference: reference,
-            name: order.user.name,
-            mobile: order.user.phone,
+            name: order.user.name || "Student",
+            mobile: order.user.phone || "9999999999",
             category: "69098858833bc4bd990d6e22"
         };
 
