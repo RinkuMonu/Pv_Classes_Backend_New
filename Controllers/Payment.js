@@ -13,94 +13,38 @@ const generateReference = () => {
     return "RAJ" + Date.now() + Math.floor(Math.random() * 1000);
 };
 
-// exports.initiatePayin = async (req, res) => {
-//     try {
-//         const { orderId } = req.body;
-
-//         // 1️⃣ Get Order
-//         const order = await Order.findById(orderId);
-//         if (!order) {
-//             return res.status(404).json({ message: "Order not found" });
-//         }
-
-//         if (order.paymentStatus === "paid") {
-//             return res.status(400).json({ message: "Order already paid" });
-//         }
-
-//         // 2️⃣ Generate Reference
-//         const reference = generateReference();
-
-//         // 3️⃣ Prepare Payload
-//         const payload = {
-//             amount: order.totalAmount,
-//             category: "69098858833bc4bd990d6e22", // fixed
-//             email: "pmladlikabas@gmail.com",    // fixed
-//             reference: reference,
-//             userId: "6970f793e59ebf5abae7769e"     // fixed
-//         };
-
-//         // 4️⃣ Call PayIn API
-//         const response = await axios.post(
-//             "https://server.finuniques.in/api/v1/payment/payin",
-//             payload,
-//             {
-//                 headers: {
-//                     "Content-Type": "application/json",
-//                     Authorization: `Bearer ${process.env.PAYIN_TOKEN}`
-//                 }
-//             }
-//         );
-
-//         // 5️⃣ Save reference in Order
-//         order.paymentReference = reference;
-//         await order.save();
-
-//         return res.status(200).json({
-//             success: true,
-//             message: "PayIn initiated successfully",
-//             paymentData: response.data
-//         });
-
-//     } catch (error) {
-//         console.log("PayIn Error:", error.response?.data || error.message);
-//         return res.status(500).json({
-//             success: false,
-//             message: "Payment initiation failed",
-//             error: error.response?.data || error.message
-//         });
-//     }
-// };
-
 exports.initiatePayin = async (req, res) => {
     console.log("🔥 PAYIN CONTROLLER HIT");
+
     try {
-
-                console.log(
-            "PAYIN TOKEN:",
-            process.env.PAYIN_TOKEN
-                ? `${process.env.PAYIN_TOKEN.slice(0, 10)}...${process.env.PAYIN_TOKEN.slice(-10)}`
-                : "MISSING"
-        );
-
         const { orderId } = req.body;
 
         // 1️⃣ Get Order + User
         const order = await Order.findById(orderId).populate("user");
 
         if (!order) {
-            return res.status(404).json({ message: "Order not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Order not found"
+            });
         }
 
         if (order.paymentStatus === "paid") {
-            return res.status(400).json({ message: "Order already paid" });
+            return res.status(400).json({
+                success: false,
+                message: "Order already paid"
+            });
         }
 
         if (!order.user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
         }
 
-        // 2️⃣ Generate Reference
-        const reference = generateReference();
+        // 2️⃣ MongoDB Order ID ko hi reference bana rahe hain
+        const reference = order._id.toString();
 
         // 3️⃣ Prepare Payload
         const payload = {
@@ -126,9 +70,12 @@ exports.initiatePayin = async (req, res) => {
             }
         );
 
-        // 5️⃣ Save reference in Order
+        // 5️⃣ Same Order ID ko paymentReference me save karo
         order.paymentReference = reference;
         await order.save();
+
+        console.log("✅ ORDER ID:", order._id.toString());
+        console.log("✅ PAYMENT REFERENCE:", order.paymentReference);
 
         return res.status(200).json({
             success: true,
@@ -150,13 +97,94 @@ exports.initiatePayin = async (req, res) => {
     }
 };
 
+// exports.initiatePayin = async (req, res) => {
+//     console.log("🔥 PAYIN CONTROLLER HIT");
+//     try {
+
+//                 console.log(
+//             "PAYIN TOKEN:",
+//             process.env.PAYIN_TOKEN
+//                 ? `${process.env.PAYIN_TOKEN.slice(0, 10)}...${process.env.PAYIN_TOKEN.slice(-10)}`
+//                 : "MISSING"
+//         );
+
+//         const { orderId } = req.body;
+
+//         // 1️⃣ Get Order + User
+//         const order = await Order.findById(orderId).populate("user");
+
+//         if (!order) {
+//             return res.status(404).json({ message: "Order not found" });
+//         }
+
+//         if (order.paymentStatus === "paid") {
+//             return res.status(400).json({ message: "Order already paid" });
+//         }
+
+//         if (!order.user) {
+//             return res.status(404).json({ message: "User not found" });
+//         }
+
+//         // 2️⃣ Generate Reference
+//         const reference = generateReference();
+
+//         // 3️⃣ Prepare Payload
+//         const payload = {
+//             amount: order.totalAmount,
+//             email: order.user.email,
+//             reference: reference,
+//             name: order.user.name,
+//             mobile: order.user.phone,
+//             category: "69098858833bc4bd990d6e22"
+//         };
+
+//         console.log("PAYIN PAYLOAD:", payload);
+
+//         // 4️⃣ Call PayIn API
+//         const response = await axios.post(
+//             "https://server.finuniques.in/api/v1/payment/payin",
+//             payload,
+//             {
+//                 headers: {
+//                     "Content-Type": "application/json",
+//                     Authorization: `Bearer ${process.env.PAYIN_TOKEN}`
+//                 }
+//             }
+//         );
+
+//         // 5️⃣ Save reference in Order
+//         order.paymentReference = reference;
+//         await order.save();
+
+//         return res.status(200).json({
+//             success: true,
+//             message: "PayIn initiated successfully",
+//             paymentData: response.data
+//         });
+
+//     } catch (error) {
+//         console.log(
+//             "PayIn Error:",
+//             error.response?.data || error.message
+//         );
+
+//         return res.status(500).json({
+//             success: false,
+//             message: "Payment initiation failed",
+//             error: error.response?.data || error.message
+//         });
+//     }
+// };
+
 
 exports.paymentCallback = async (req, res) => {
     try {
         console.log("🔥 PAYMENT CALLBACK HIT");
         console.log("CALLBACK BODY:", req.body);
 
-        const {
+const body = req.body || {};
+
+const {
     orderId,
     responseCode,
     pgTransId,
@@ -164,7 +192,7 @@ exports.paymentCallback = async (req, res) => {
     paymentMode,
     amount,
     responseDescription
-} = req.body;
+} = body;
 
         if (!orderId) {
             return res.status(400).json({ message: "Invalid callback data" });
