@@ -21,10 +21,10 @@ const UserSchema = new mongoose.Schema(
       required: false
     },
     referral_code: { type: String, default: null },
-    otp: { type: String },
-    otpExpires: {
-      type: Date,
-    },
+    // otp: { type: String },
+    // otpExpires: {
+    //   type: Date,
+    // },
 
     // 🔑 Forgot password OTP
     resetPasswordOtp: { type: String },
